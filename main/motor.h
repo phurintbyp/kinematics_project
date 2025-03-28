@@ -23,6 +23,9 @@ class Motor {
     long getCurrentPosition();
 
     long getTargetPosition();
+    void setSoftLimit(float softLimitMin, float softLimitMax);
+    float getSoftLimitMin();
+    float getSoftLimitMax();
     void stop();
 
   private:
@@ -33,6 +36,9 @@ class Motor {
     long _numSteps;
     long _currentPosition;
     long _targetPosition;
+    float _softLimitMin;
+    float _softLimitMax;
+    int _accelSteps;
 };
 
 #endif

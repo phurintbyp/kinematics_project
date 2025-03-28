@@ -47,11 +47,20 @@ void setAllMotorSpeed(long speed1, long speed2, long speed3) {
   motor3.setSpeed(speed3);
 }
 
-long stepsToAngle(float steps) {
-  return round(steps / 17.78);
+long angleToSteps(float angle) {
+  return round(angle * 17.78);
 }
 
-void moveAllTo(long m1Target, long m2Target, long m3Target) {
+void moveAllTo(float m1Angle, float m2Angle, float m3Angle) {
+  if (m1Angle < motor1.getSoftLimitMin() || m1Angle > motor1.getSoftLimitMax() || m2Angle < motor2.getSoftLimitMin() || m2Angle > motor2.getSoftLimitMax() || m3Angle < motor3.getSoftLimitMin() || m3Angle > motor3.getSoftLimitMax()) {
+    Serial.println("Target position exceeds set soft limit.");
+    return;
+  }
+
+  long m1Target = angleToSteps(m1Angle);
+  long m2Target = angleToSteps(m2Angle);
+  long m3Target = angleToSteps(m3Angle);
+
   motor1.setTargetPosition(m1Target);  // Set target position for motor1
   motor2.setTargetPosition(m2Target);  // Set target position for motor2
   motor3.setTargetPosition(m3Target);  // Set target position for motor3

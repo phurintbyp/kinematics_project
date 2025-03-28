@@ -2,9 +2,9 @@
 #define MOTORCONTROL_H
 
 void initMotors();
-void moveAllTo(long m1Target, long m2Target, long m3Target);
+void moveAllTo(float m1Angle, float m2Angle, float m3Angle);
 void printCurrentPos();
-long stepsToAngle(float steps);
+long angleToSteps(float angle);
 void setAllMotorSpeed(long speed1, long speed2, long speed3);
 void moveAll();
 void stopAll();

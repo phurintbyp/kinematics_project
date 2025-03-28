@@ -13,11 +13,9 @@ unsigned long printInterval = 1000;
 
 void setup()
 {
-  Serial.begin(9600);
-  // initMotors(M1_ACCEL, M2_ACCEL, M3_ACCEL);
-  // initSafetyPins();
-  initMotors();  // Initialize motors
-  setAllMotorSpeed(100, 300, 300);  // Set speed for all motors
+  Serial.begin(115200);
+  initMotors();
+  setAllMotorSpeed(100, 300, 300); //lower = higher speed
 }
 
 void loop()

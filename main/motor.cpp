@@ -22,17 +22,15 @@ void Motor::disableMotor(){
 }
 
 void Motor::setSpeed(long stepIntervalMicros) {
-  _stepIntervalMicros = stepIntervalMicros;  // Set the constant time interval between steps
+  _stepIntervalMicros = stepIntervalMicros;
 }
 
 void Motor::move() {
-  // Move one step towards the target position
-  digitalWrite(_stepPin, HIGH);  // Generate step pulse (HIGH)
-  delayMicroseconds(_stepIntervalMicros);  // Wait for the set time interval
-  digitalWrite(_stepPin, LOW);  // Generate step pulse (LOW)
-  delayMicroseconds(_stepIntervalMicros);  // Wait for the set time interval
+  digitalWrite(_stepPin, HIGH);
+  delayMicroseconds(_stepIntervalMicros);
+  digitalWrite(_stepPin, LOW);
+  delayMicroseconds(_stepIntervalMicros);
 
-  // Increment or decrement position depending on direction
   if (_targetPosition > _currentPosition) {
     _currentPosition++;
   } else {
@@ -42,6 +40,27 @@ void Motor::move() {
 
 void Motor::setDirection(bool dir) {
   digitalWrite(_dirPin, dir);
+}
+
+void Motor::setSoftLimit(float softLimitMin, float softLimitMax) {
+  if (softLimitMin > softLimitMax) {
+    Serial.println("Error: Min limit cannot be greater than max limit.");
+    return;
+  }
+  _softLimitMin = softLimitMin;
+  _softLimitMax = softLimitMax;
+  Serial.print("Soft limits set to: ");
+  Serial.print(_softLimitMin);
+  Serial.print(" to ");
+  Serial.println(_softLimitMax);
+}
+
+float Motor::getSoftLimitMin() {
+  return _softLimitMin;
+}
+
+float Motor::getSoftLimitMax() {
+  return _softLimitMax;
 }
 
 void Motor::setTargetPosition(long target) {
@@ -58,6 +77,14 @@ long Motor::getCurrentPosition() {
 
 long Motor::getTargetPosition() {
   return _targetPosition;  // Return target position
+}
+
+void Motor::setAccelSteps(int accelSteps){
+  _accelSteps = accelSteps;
+}
+
+void Motor::getAccelSteps(){
+  return _accelSteps;
 }
 
 void Motor::stop() {
