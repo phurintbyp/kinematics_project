@@ -8,8 +8,6 @@ long angleToSteps(float angle);
 void setAllMotorSpeed(long speed1, long speed2, long speed3);
 void moveAll();
 void stopAll();
-
-extern bool isMoving;
-extern const long MAX_SPEED;
+void setAllSoftLimits(float m1Min, float m1Max, float m2Min, float m2Max, float m3Min, float m3Max);
 
 #endif

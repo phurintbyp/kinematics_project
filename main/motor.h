@@ -26,6 +26,8 @@ class Motor {
     void setSoftLimit(float softLimitMin, float softLimitMax);
     float getSoftLimitMin();
     float getSoftLimitMax();
+    void setAccelSteps(int accelSteps);
+    void getAccelSteps();
     void stop();
 
   private:
