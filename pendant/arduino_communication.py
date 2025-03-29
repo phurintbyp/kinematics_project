@@ -18,7 +18,9 @@ class ArduinoCommunicator:
         self.serial = None
         self.connected = False
         self.lock = threading.Lock()  # Thread lock for serial communication
-        
+        # Try to connect on initialization
+        self.connect()
+
     def connect(self):
         """
         Establish connection with the Arduino
@@ -27,123 +29,128 @@ class ArduinoCommunicator:
             bool: True if connection successful, False otherwise
         """
         try:
-            self.serial = serial.Serial(
-                port=self.port,
-                baudrate=self.baud_rate,
-                timeout=self.timeout
-            )
-            
-            # Wait for Arduino to reset after connection
-            time.sleep(2)
-            
-            # Send a test command and wait for response
-            self.serial.write(b'PING\n')
-            response = self.serial.readline().decode('utf-8').strip()
-            
-            if response == 'PONG':
-                self.connected = True
-                print(f"Successfully connected to Arduino on {self.port}")
-                return True
-            else:
-                print(f"Connected to port {self.port}, but received unexpected response: {response}")
-                self.serial.close()
-                self.serial = None
-                return False
-                
-        except serial.SerialException as e:
+            self.serial = serial.Serial(self.port, self.baud_rate, timeout=self.timeout)
+            time.sleep(2)  # Wait for Arduino to reset
+            self.connected = True
+            print(f"Connected to Arduino on {self.port}")
+            return True
+        except Exception as e:
             print(f"Failed to connect to Arduino: {e}")
-            self.serial = None
+            self.connected = False
             return False
     
     def disconnect(self):
-        """Disconnect from the Arduino"""
-        if self.serial:
+        """Close the serial connection"""
+        if self.serial and self.serial.is_open:
             self.serial.close()
-            self.serial = None
             self.connected = False
             print("Disconnected from Arduino")
     
-    def is_connected(self):
-        """Check if connected to Arduino"""
-        return self.connected and self.serial is not None
-    
-    def send_command(self, command):
+    def send_command(self, command_dict):
         """
-        Send a command to the Arduino
+        Send a command to the Arduino as JSON
         
         Args:
-            command (str): Command string to send
+            command_dict: Dictionary containing the command
             
         Returns:
-            str: Response from Arduino or None if error
+            bool: True if command sent successfully, False otherwise
         """
-        if not self.is_connected():
+        if not self.connected or not self.serial:
             print("Not connected to Arduino")
-            return None
+            return False
         
         try:
-            with self.lock:
-                # Send the command with newline termination
-                self.serial.write(f"{command}\n".encode('utf-8'))
+            with self.lock:  # Ensure thread safety for serial communication
+                # Convert command to JSON string and add newline
+                command_json = json.dumps(command_dict) + '\n'
+                self.serial.write(command_json.encode())
+                self.serial.flush()
+                time.sleep(self.command_delay)  # Small delay to ensure command is processed
                 
-                # Wait for and read the response
-                response = self.serial.readline().decode('utf-8').strip()
-                return response
+                # Wait for and parse response
+                response = self.serial.readline().decode().strip()
+                if response:
+                    try:
+                        response_dict = json.loads(response)
+                        if response_dict.get('status') == 'ok':
+                            return True
+                        else:
+                            print(f"Arduino error: {response_dict.get('message', 'Unknown error')}")
+                            return False
+                    except json.JSONDecodeError:
+                        print(f"Invalid response from Arduino: {response}")
+                        return False
+                else:
+                    print("No response from Arduino")
+                    return False
         except Exception as e:
             print(f"Error sending command to Arduino: {e}")
-            return None
+            return False
     
     def send_joint_command(self, joint_positions):
         """
-        Send joint positions to the Arduino
+        Send joint movement command with specific position for each joint
         
         Args:
-            joint_positions (dict): Dictionary of joint positions
+            joint_positions: Dictionary of joint positions (degrees for rotary joints, mm for prismatic)
             
         Returns:
-            bool: True if command was sent successfully
+            bool: True if command sent successfully, False otherwise
         """
-        # Format the joint positions as a JSON string
-        command = "MOVE " + json.dumps(joint_positions)
+        # We're sending specific joint positions to the Arduino
+        # Arduino only needs to move motors to these positions, not calculate kinematics
+        command = {
+            'cmd': 'setJointPositions',
+            'positions': {
+                'j1': joint_positions['base_rotation'],
+                'j2': joint_positions['shoulder_rotation'],
+                'j3': joint_positions['prismatic_extension'],
+                'j4': joint_positions['elbow_rotation'],
+                'j5': joint_positions['elbow2_rotation'],
+                'j6': joint_positions['end_effector_rotation']
+            }
+        }
+        return self.send_command(command)
+    
+    def send_jog_command(self, jog_data):
+        """
+        Send jog command for incremental movement of a specific joint
         
-        response = self.send_command(command)
+        Args:
+            jog_data: Dictionary containing joint name and increment
+            
+        Returns:
+            bool: True if command sent successfully, False otherwise
+        """
+        # Map joint names to joint numbers
+        joint_map = {
+            'base_rotation': 'j1',
+            'shoulder_rotation': 'j2',
+            'prismatic_extension': 'j3',
+            'elbow_rotation': 'j4',
+            'elbow2_rotation': 'j5',
+            'end_effector_rotation': 'j6'
+        }
         
-        if response == "OK":
-            return True
-        else:
-            print(f"Error sending joint command. Response: {response}")
+        joint_number = joint_map.get(jog_data['joint'])
+        if not joint_number:
+            print(f"Invalid joint name: {jog_data['joint']}")
             return False
+            
+        command = {
+            'cmd': 'moveJoint',
+            'joint': joint_number,
+            'increment': jog_data['increment']
+        }
+        return self.send_command(command)
     
     def send_emergency_stop(self):
         """
-        Send emergency stop command to Arduino
+        Send emergency stop command
         
         Returns:
-            bool: True if command was sent successfully
+            bool: True if command sent successfully, False otherwise
         """
-        response = self.send_command("ESTOP")
-        
-        if response == "STOPPED":
-            return True
-        else:
-            print(f"Error sending emergency stop. Response: {response}")
-            return False
-    
-    def get_status(self):
-        """
-        Get the current status from the Arduino
-        
-        Returns:
-            dict: Status information or None if error
-        """
-        response = self.send_command("STATUS")
-        
-        if response:
-            try:
-                status = json.loads(response)
-                return status
-            except json.JSONDecodeError:
-                print(f"Error parsing status response: {response}")
-                return None
-        else:
-            return None
+        command = {'cmd': 'estop'}
+        return self.send_command(command)

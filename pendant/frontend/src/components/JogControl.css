@@ -1,0 +1,475 @@
+.machine-movement {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.control-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #f0f0f0;
+}
+
+.control-title i {
+  margin-right: 8px;
+  color: #ff6a00;
+}
+
+.coordinate-selector {
+  position: relative;
+}
+
+.coordinate-dropdown {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 5px 25px 5px 10px;
+  font-size: 14px;
+  border-radius: 3px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.coordinate-dropdown:focus {
+  outline: none;
+  border-color: #ff6a00;
+}
+
+/* Control Actions */
+.control-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.action-button {
+  flex: 1;
+  background-color: #ff6a00;
+  color: white;
+  border: none;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s;
+}
+
+.action-button:hover {
+  background-color: #e05e00;
+}
+
+.action-button.home-all {
+  flex: 1;
+}
+
+.action-button.compensation {
+  flex: 2;
+  background-color: #444;
+}
+
+.action-button.compensation:hover {
+  background-color: #555;
+}
+
+/* Axis Control Grid */
+.axis-control-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.axis-control-row {
+  display: grid;
+  grid-template-columns: 100px repeat(6, 1fr) 100px;
+  gap: 5px;
+  height: 40px;
+}
+
+.home-axis-button {
+  background-color: #ff3a3a;
+  color: white;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 0 10px;
+  text-align: center;
+}
+
+.home-axis-button:hover {
+  background-color: #cc2e2e;
+}
+
+.jog-control {
+  padding: 0.7rem;
+  background-color: #252525;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100%;
+}
+
+.jog-control h2 {
+  margin-top: 0;
+  color: #f0f0f0;
+  border-bottom: 2px solid #ff6a00;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.jog-control h3 {
+  font-size: 0.9rem;
+  margin: 0.3rem 0;
+  color: #f0f0f0;
+}
+
+.mode-selector {
+  display: flex;
+  margin-bottom: 0.7rem;
+}
+
+.mode-button {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: #333;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.mode-button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.mode-button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.mode-button.active {
+  background-color: #ff6a00;
+  color: white;
+  border-color: #e05e00;
+}
+
+.velocity-control {
+  margin-bottom: 0.7rem;
+  padding: 0.7rem;
+  background-color: #333;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.velocity-control h3 {
+  margin-top: 0;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.3rem;
+}
+
+.increment-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.3rem 0 0.5rem;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 0.3rem;
+  font-family: 'Roboto Mono', monospace, sans-serif;
+}
+
+.increment-value {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ff6a00;
+  margin-right: 0.3rem;
+}
+
+.increment-unit {
+  font-size: 0.8rem;
+  color: #aaa;
+  text-transform: lowercase;
+}
+
+/* Control buttons */
+.control-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.joint-controls, .cartesian-controls {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.7rem;
+}
+
+.joint-buttons, .cartesian-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.joint-control-row, .cartesian-control-row {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 5px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.joint-label, .axis-label {
+  color: #f0f0f0;
+  font-weight: 500;
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.jog-button {
+  background-color: #333;
+  color: #f0f0f0;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+}
+
+.jog-button:hover {
+  background-color: #444;
+}
+
+.jog-button:active {
+  background-color: #ff6a00;
+  border-color: #e05e00;
+}
+
+.jog-button.positive {
+  background-color: #2a3a4a;
+}
+
+.jog-button.negative {
+  background-color: #3a2a3a;
+}
+
+.jog-button.positive:hover {
+  background-color: #3a4a5a;
+}
+
+.jog-button.negative:hover {
+  background-color: #4a3a4a;
+}
+
+.jog-button.positive:active, .jog-button.negative:active {
+  background-color: #ff6a00;
+}
+
+/* Slider styles */
+.horizontal-slider {
+  width: 100%;
+  height: 20px;
+  margin: 0.5rem 0;
+}
+
+.slider-track {
+  top: 8px;
+  height: 6px;
+  background: #444;
+  border-radius: 3px;
+}
+
+.slider-track.slider-track-0 {
+  background: #ff6a00;
+}
+
+.slider-thumb {
+  width: 16px;
+  height: 16px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  top: 2px;
+}
+
+.slider-thumb:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.5);
+}
+
+.increment-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+}
+
+.increment-label {
+  font-size: 10px;
+  color: #aaa;
+}
+
+.increment-presets {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.increment-presets button {
+  flex: 1;
+  padding: 3px 0;
+  background-color: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 3px;
+  color: #f0f0f0;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.increment-presets button:hover {
+  background-color: #333;
+}
+
+.increment-presets button.active-preset {
+  background-color: #ff6a00;
+  color: white;
+  border-color: #e05e00;
+}
+
+/* Keyboard shortcuts info */
+.keyboard-controls {
+  margin-top: 0.5rem;
+  padding: 0.7rem;
+  background-color: #333;
+  border-radius: 4px;
+  border: 1px solid #444;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.keyboard-controls h3 {
+  margin-top: 0;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+  grid-column: span 2;
+}
+
+.keyboard-joint, .keyboard-cartesian {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+}
+
+.keyboard-controls p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+/* Work Zero Button */
+.set-work-zero {
+  margin-top: 0.5rem;
+}
+
+/* Joint Controls */
+.joint-controls {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #333;
+  border-radius: 3px;
+  border: 1px solid #444;
+}
+
+.joint-controls h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #f0f0f0;
+}
+
+.joint-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.joint-control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.joint-label {
+  flex: 1;
+  color: #b0b0b0;
+  font-size: 14px;
+}
+
+/* Error State */
+.axis-warning {
+  color: #ff3a3a;
+  background-color: rgba(255, 58, 58, 0.1);
+  padding: 5px 10px;
+  font-size: 13px;
+  border-radius: 3px;
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.axis-warning i {
+  margin-right: 8px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .axis-control-row {
+    grid-template-columns: 80px repeat(6, 1fr) 80px;
+  }
+  
+  .jog-button, .home-axis-button, .set-axis-button {
+    font-size: 12px;
+    padding: 0 5px;
+  }
+}
+
+@media (max-width: 768px) {
+  .axis-control-row {
+    grid-template-columns: repeat(4, 1fr);
+    height: auto;
+  }
+  
+  .home-axis-button, .set-axis-button {
+    grid-column: span 4;
+    height: 40px;
+  }
+}
