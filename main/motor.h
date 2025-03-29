@@ -7,11 +7,11 @@ class Motor {
   public:
     Motor(byte stepPin, byte dirPin, byte enablePin);
 
-    // Set motor speed parameters (no acceleration)
-    void setSpeed(long stepIntervalMicros);
+    // Set motor speed parameters
+    void setFastSpeed(long stepIntervalMicros);
+    void setSlowSpeed(long stepIntervalMicros);
 
-    // Move the motor at a constant speed
-    void move();
+    void move(bool enableAcceleration = true);
 
     void enableMotor();
     void disableMotor();
@@ -26,21 +26,29 @@ class Motor {
     void setSoftLimit(float softLimitMin, float softLimitMax);
     float getSoftLimitMin();
     float getSoftLimitMax();
-    void setAccelSteps(int accelSteps);
+    void setAccelSteps(long accelSteps);
     void getAccelSteps();
     void stop();
+    void setCurrentPosition(long pos);
+    bool isBeyondSoftLimit(float angle);
+    void setTotalSteps();
+    void reset();
 
   private:
     byte _stepPin;
     byte _dirPin;
     byte _enablePin;
-    long _stepIntervalMicros;
+    long _fastStepIntervalMicros;
+    long _slowStepIntervalMicros;
     long _numSteps;
     long _currentPosition;
     long _targetPosition;
     float _softLimitMin;
     float _softLimitMax;
-    int _accelSteps;
+    long _accelSteps;
+    long _stepsTaken;
+    int _adjustedStepIntervalMicros;
+    long _totalSteps;
 };
 
 #endif

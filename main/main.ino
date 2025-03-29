@@ -1,27 +1,34 @@
 #include "motorControl.h"
-#include "safety.h"
-#include "motor.h"
-
-const int M1_SPEED = 100; //lower = higher speed
-const int M2_SPEED = 300;
-const int M3_SPEED = 300;
+#include "config.h"
 
 void setup()
 {
   Serial.begin(115200);
   initMotors();
-  setAllMotorSpeed(M1_SPEED, M2_SPEED, M3_SPEED);
   setAllSoftLimits(-360, 360, -360, 360, -360, 360);
 }
 
 void loop()
 {
-  if (Serial.available()&& isMoveSafe()) {
+  if (Serial.available()) {
     char command = Serial.read();
     switch (command) {
-      case 'w': moveAllTo(90, 0, 0); break; // Moves in angles
-      case 'a': moveAllTo(-90, 0, 0); break;
-      case 'p': printCurrentPos(); break;
+      case 'w': 
+        setAllMotorFastSpeed(M1_SPEED_FAST, M2_SPEED_FAST, M3_SPEED_FAST);
+        setAllMotorSlowSpeed(M1_SPEED_SLOW, M2_SPEED_SLOW, M3_SPEED_SLOW);
+        moveAllTo(90, 0, 0); // Moves in angles
+        break;
+      case 'a': 
+        setAllMotorFastSpeed(M1_SPEED_FAST, M2_SPEED_FAST, M3_SPEED_FAST);
+        setAllMotorSlowSpeed(M1_SPEED_SLOW, M2_SPEED_SLOW, M3_SPEED_SLOW);
+        moveAllTo(-90, 0, 0); 
+        break;
+      case 'p': 
+        printCurrentPos(); 
+        break;
+      case 'h':
+        home();
+        break;
     }
   }
 }
