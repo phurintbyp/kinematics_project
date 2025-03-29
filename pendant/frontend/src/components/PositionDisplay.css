@@ -1,0 +1,49 @@
+.position-display {
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.position-display h2 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+}
+
+.position-section {
+  margin-bottom: 1.5rem;
+}
+
+.position-section h3 {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+}
+
+.position-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.position-table td {
+  padding: 0.6rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.position-table tr:last-child td {
+  border-bottom: none;
+}
+
+.position-table td:first-child {
+  font-weight: bold;
+  color: #34495e;
+  width: 60%;
+}
+
+.position-table td:last-child {
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+  color: #2980b9;
+}

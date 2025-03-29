@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI service with hot-reload
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: robot-arm-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # API and WebSocket port
+    volumes:
+      # Mount the entire codebase for live code changes
+      - .:/app
+      # Create a named volume for persistent data storage
+      - robot-data:/app/data
+    environment:
+      - SIMULATION_MODE=true
+      - PYTHONUNBUFFERED=1  # Ensures Python output is sent straight to the terminal
+    command: uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+    networks:
+      - robot-network
+
+  # Frontend React service with hot-reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: robot-arm-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"  # React development server port
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_PORT=8080
+      - CHOKIDAR_USEPOLLING=true  # Helps with file watching in Docker
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Prevents node_modules from being overwritten
+    command: npm start
+    networks:
+      - robot-network
+
+networks:
+  robot-network:
+    driver: bridge
+
+volumes:
+  robot-data:
+    # Named volume for persisting saved positions and programs

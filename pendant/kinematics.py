@@ -1,6 +1,9 @@
+"""
+we can set this file later when tata complete
+"""
 import numpy as np
 from math import sin, cos, atan2, sqrt, pi
-from config import ROBOT_DIMENSIONS, JOINT_LIMITS
+from config import ROBOT_DIMENSIONS, JOINT_LIMITS, ROBOT_CONFIG
 
 class RobotParameters:
     """Robot physical parameters for the RRPRRR configuration"""
@@ -11,17 +14,38 @@ class RobotParameters:
         self.link2_min = ROBOT_DIMENSIONS['LINK2_MIN']
         self.link2_max = ROBOT_DIMENSIONS['LINK2_MAX']
         self.link3_length = ROBOT_DIMENSIONS['LINK3_LENGTH']
+        self.link4_length = ROBOT_DIMENSIONS['LINK4_LENGTH']
         self.end_effector_length = ROBOT_DIMENSIONS['END_EFFECTOR_LENGTH']
         
-        # Joint limits from config
-        self.joint_limits = {
-            'base_rotation': JOINT_LIMITS['BASE_ROTATION'],
-            'shoulder_rotation': JOINT_LIMITS['SHOULDER_ROTATION'],
-            'prismatic_extension': JOINT_LIMITS['PRISMATIC_EXTENSION'],
-            'elbow_rotation': JOINT_LIMITS['ELBOW_ROTATION'],
-            'wrist_rotation': JOINT_LIMITS['WRIST_ROTATION'],
-            'end_effector_rotation': JOINT_LIMITS['END_EFFECTOR_ROTATION']
+        # Joint limits from config with both upper and lowercase keys for compatibility
+        self.joint_limit_mapping = {
+            'base_rotation': 'BASE_ROTATION',
+            'shoulder_rotation': 'SHOULDER_ROTATION',
+            'prismatic_extension': 'PRISMATIC_EXTENSION',
+            'elbow_rotation': 'ELBOW_ROTATION',
+            'elbow2_rotation': 'ELBOW2_ROTATION',
+            'end_effector_rotation': 'END_EFFECTOR_ROTATION'
         }
+        
+        # Create a dictionary with lowercase keys for easier access
+        self.joint_limits = {}
+        for lowercase, uppercase in self.joint_limit_mapping.items():
+            if uppercase in JOINT_LIMITS:
+                self.joint_limits[lowercase] = JOINT_LIMITS[uppercase]
+            else:
+                # Fallback default limits if not found
+                print(f"Warning: Joint limit not found for {uppercase}")
+                self.joint_limits[lowercase] = (-180, 180)
+        
+        # Workspace limits
+        self.workspace_limits = ROBOT_CONFIG.get('WORKSPACE_LIMITS', {
+            'x': (-500, 500),
+            'y': (-500, 500),
+            'z': (0, 500),
+            'roll': (-180, 180),
+            'pitch': (-90, 90),
+            'yaw': (-180, 180)
+        })
 
 
 class ForwardKinematics:
@@ -39,7 +63,7 @@ class ForwardKinematics:
                 - shoulder_rotation (degrees)
                 - prismatic_extension (mm)
                 - elbow_rotation (degrees)
-                - wrist_rotation (degrees)
+                - elbow2_rotation (degrees)
                 - end_effector_rotation (degrees)
                 
         Returns:
@@ -50,13 +74,14 @@ class ForwardKinematics:
         q2 = np.radians(joint_positions['shoulder_rotation'])
         d3 = joint_positions['prismatic_extension']  # Prismatic joint (mm)
         q4 = np.radians(joint_positions['elbow_rotation'])
-        q5 = np.radians(joint_positions['wrist_rotation'])
+        q5 = np.radians(joint_positions['elbow2_rotation'])
         q6 = np.radians(joint_positions['end_effector_rotation'])
         
         # Get robot parameters
         base_height = self.robot_params.base_height
         link1_length = self.robot_params.link1_length
         link3_length = self.robot_params.link3_length
+        link4_length = self.robot_params.link4_length
         end_effector_length = self.robot_params.end_effector_length
         
         # Calculate transformation matrices using DH parameters
@@ -92,10 +117,10 @@ class ForwardKinematics:
             [0, 0, 0, 1]
         ])
         
-        # Wrist rotation
+        # Elbow2 rotation
         T45 = np.array([
-            [cos(q5), -sin(q5), 0, 0],
-            [sin(q5), cos(q5), 0, 0],
+            [cos(q5), -sin(q5), 0, link4_length * cos(q5)],
+            [sin(q5), cos(q5), 0, link4_length * sin(q5)],
             [0, 0, 1, 0],
             [0, 0, 0, 1]
         ])
@@ -136,6 +161,54 @@ class ForwardKinematics:
             'pitch': float(np.degrees(pitch)),
             'yaw': float(np.degrees(yaw))
         }
+    
+    def calculate_jacobian(self, joint_positions):
+        """
+        Calculate the Jacobian matrix at the current joint positions
+        This is useful for velocity control in Cartesian space
+        
+        Args:
+            joint_positions: Dictionary containing joint positions
+                
+        Returns:
+            6x6 Jacobian matrix relating joint velocities to end effector velocities
+        """
+        # This is a simplified Jacobian calculation
+        # For a real robot, you would use the analytical Jacobian
+        
+        # Small delta for numerical differentiation
+        delta = 0.001
+        
+        # Current end effector position
+        current_ee = self.calculate(joint_positions)
+        
+        # Initialize Jacobian matrix
+        J = np.zeros((6, 6))
+        
+        # Joint names in order
+        joints = ['base_rotation', 'shoulder_rotation', 'prismatic_extension', 
+                 'elbow_rotation', 'elbow2_rotation', 'end_effector_rotation']
+        
+        # Calculate each column of the Jacobian
+        for i, joint in enumerate(joints):
+            # Make a copy of joint positions
+            perturbed = joint_positions.copy()
+            
+            # Perturb the joint
+            perturbed[joint] += delta
+            
+            # Calculate new end effector position
+            new_ee = self.calculate(perturbed)
+            
+            # Calculate the partial derivatives
+            J[0, i] = (new_ee['x'] - current_ee['x']) / delta
+            J[1, i] = (new_ee['y'] - current_ee['y']) / delta
+            J[2, i] = (new_ee['z'] - current_ee['z']) / delta
+            J[3, i] = (new_ee['roll'] - current_ee['roll']) / delta
+            J[4, i] = (new_ee['pitch'] - current_ee['pitch']) / delta
+            J[5, i] = (new_ee['yaw'] - current_ee['yaw']) / delta
+        
+        return J
 
 
 class InverseKinematics:
@@ -170,6 +243,7 @@ class InverseKinematics:
         link2_min = self.robot_params.link2_min
         link2_max = self.robot_params.link2_max
         link3_length = self.robot_params.link3_length
+        link4_length = self.robot_params.link4_length
         end_effector_length = self.robot_params.end_effector_length
         
         # Adjust z for base height
@@ -192,50 +266,136 @@ class InverseKinematics:
         shoulder_angle = atan2(z_adjusted, xy_distance)
         q2 = shoulder_angle
         
-        # Calculate the distance from shoulder to wrist
-        shoulder_to_wrist = sqrt(xy_distance**2 + z_adjusted**2)
+        # Calculate the distance from shoulder to end effector position
+        shoulder_to_end = sqrt(xy_distance**2 + z_adjusted**2)
         
         # Calculate prismatic extension needed
-        d3 = shoulder_to_wrist - link1_length - link3_length
+        # Accounting for all links in the chain: link1, link3, link4, and end_effector
+        d3 = shoulder_to_end - link1_length - link3_length - link4_length
         
         # Check if prismatic extension is within limits
         if d3 < link2_min or d3 > link2_max:
-            print(f"Prismatic joint extension {d3} is out of range [{link2_min}, {link2_max}]")
-            return None
+            return None  # No solution possible
         
         # For simplicity, we'll set elbow rotation to 0
-        q4 = 0.0
+        # In a more advanced implementation, these angles would be calculated
+        # based on the specific robot configuration and target position
+        q4 = 0
         
-        # Set wrist rotation and end effector rotation based on target orientation
+        # Calculate elbow2 rotation to achieve desired orientation
         # This is a simplified approach
         q5 = pitch
+        
+        # Calculate end effector rotation
         q6 = roll
         
-        # Create joint positions dictionary
+        # Convert back to degrees
         joint_positions = {
             'base_rotation': np.degrees(q1),
             'shoulder_rotation': np.degrees(q2),
             'prismatic_extension': d3,
             'elbow_rotation': np.degrees(q4),
-            'wrist_rotation': np.degrees(q5),
+            'elbow2_rotation': np.degrees(q5),
             'end_effector_rotation': np.degrees(q6)
         }
         
-        # Validate joint limits
+        # Check joint limits
         for joint, value in joint_positions.items():
-            min_val, max_val = self.robot_params.joint_limits[joint]
-            if value < min_val or value > max_val:
-                print(f"Joint {joint} value {value} is out of range [{min_val}, {max_val}]")
-                return None
-        
-        # Verify the solution with forward kinematics
-        ee_pos = self.fk.calculate(joint_positions)
-        error = sqrt((ee_pos['x'] - target_position['x'])**2 + 
-                     (ee_pos['y'] - target_position['y'])**2 + 
-                     (ee_pos['z'] - target_position['z'])**2)
-        
-        if error > 10.0:  # 10mm tolerance
-            print(f"IK solution has high error: {error}mm")
-            return None
+            limits = self.robot_params.joint_limits[joint]
+            if value < limits[0] or value > limits[1]:
+                return None  # Joint limit exceeded
         
         return joint_positions
+    
+    def calculate_differential(self, current_joints, target_ee, max_iterations=10, tolerance=0.001):
+        """
+        Calculate joint positions using differential inverse kinematics
+        This is useful for smooth jogging in Cartesian space
+        
+        Args:
+            current_joints: Dictionary with current joint positions
+            target_ee: Dictionary with target end effector position
+            max_iterations: Maximum number of iterations for convergence
+            tolerance: Error tolerance for convergence
+            
+        Returns:
+            Dictionary with new joint positions or None if no solution found
+        """
+        import sys  # For stdout.flush
+        
+        # Get the Jacobian calculator
+        fk = self.fk
+        
+        # Current joint positions as a copy
+        joints = current_joints.copy()
+        
+        # Joint names in order
+        joint_names = ['base_rotation', 'shoulder_rotation', 'prismatic_extension', 
+                      'elbow_rotation', 'elbow2_rotation', 'end_effector_rotation']
+        
+        print(f"Starting differential IK with joint positions: {joints}")
+        print(f"Target end effector position: {target_ee}")
+        sys.stdout.flush()
+        
+        # Convert joints to numpy array for calculations
+        q = np.array([joints[j] for j in joint_names])
+        
+        # Iterate to find solution
+        for i in range(max_iterations):
+            # Current end effector position
+            current_ee = fk.calculate(joints)
+            
+            # Calculate error
+            error = np.array([
+                target_ee['x'] - current_ee['x'],
+                target_ee['y'] - current_ee['y'],
+                target_ee['z'] - current_ee['z'],
+                target_ee['roll'] - current_ee['roll'],
+                target_ee['pitch'] - current_ee['pitch'],
+                target_ee['yaw'] - current_ee['yaw']
+            ])
+            
+            # Check convergence
+            error_magnitude = np.linalg.norm(error)
+            print(f"Iteration {i+1}, error magnitude: {error_magnitude}")
+            sys.stdout.flush()
+            
+            if error_magnitude < tolerance:
+                print(f"Converged after {i+1} iterations")
+                print(f"Final joint positions: {joints}")
+                sys.stdout.flush()
+                return joints
+            
+            # Get Jacobian matrix
+            J = fk.calculate_jacobian(joints)
+            
+            # Calculate pseudo-inverse of Jacobian
+            J_inv = np.linalg.pinv(J)
+            
+            # Calculate joint increments
+            dq = J_inv @ error
+            
+            # Update joint values
+            q = q + dq
+            
+            # Update joints dictionary
+            for j, name in enumerate(joint_names):
+                old_value = joints[name]
+                joints[name] = q[j]
+                
+                # Apply joint limits
+                limits = self.robot_params.joint_limits[name]
+                if joints[name] < limits[0]:
+                    print(f"Joint {name} hit lower limit: {joints[name]} < {limits[0]}")
+                    joints[name] = limits[0]
+                elif joints[name] > limits[1]:
+                    print(f"Joint {name} hit upper limit: {joints[name]} > {limits[1]}")
+                    joints[name] = limits[1]
+                
+                print(f"Joint {name}: {old_value} -> {joints[name]}")
+                sys.stdout.flush()
+        
+        # If we reach here, we didn't converge
+        print(f"Failed to converge after {max_iterations} iterations")
+        sys.stdout.flush()
+        return None
