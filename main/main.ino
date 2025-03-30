@@ -1,27 +1,57 @@
+#include <ArduinoJson.h>
 #include "motorControl.h"
 #include "config.h"
+#include "comms.h"
+#include "safety.h"
+
+StaticJsonDocument<256> document;
+JsonObject position = document.to<JsonObject>();
 
 void setup()
 {
   Serial.begin(115200);
   initMotors();
-  setAllSoftLimits(-360, 360, -360, 360, -360, 360);
+  setAllSoftLimits(M1_SOFT_MIN, M1_SOFT_MAX, M2_SOFT_MIN, M2_SOFT_MAX, M3_SOFT_MIN, M3_SOFT_MAX, M4_SOFT_MIN, M4_SOFT_MAX, M5_SOFT_MIN, M5_SOFT_MAX);
 }
 
 void loop()
 {
-  if (Serial.available()) {
+  if (Serial.available() && isMoveSafe()) {
     char command = Serial.read();
     switch (command) {
       case 'w': 
-        setAllMotorFastSpeed(M1_SPEED_FAST, M2_SPEED_FAST, M3_SPEED_FAST);
-        setAllMotorSlowSpeed(M1_SPEED_SLOW, M2_SPEED_SLOW, M3_SPEED_SLOW);
-        moveAllTo(90, 0, 0); // Moves in angles
+        position["j1"] = 90;
+        position["j2"] = 0;
+        position["j3"] = 0;
+        position["j4"] = 0;
+        position["j5"] = 0;
+
+        setAllMotorFastSpeed(SPEED_FAST);
+        setAllMotorSlowSpeed(SPEED_SLOW);
+        setJointPositions(position);
         break;
-      case 'a': 
-        setAllMotorFastSpeed(M1_SPEED_FAST, M2_SPEED_FAST, M3_SPEED_FAST);
-        setAllMotorSlowSpeed(M1_SPEED_SLOW, M2_SPEED_SLOW, M3_SPEED_SLOW);
-        moveAllTo(-90, 0, 0); 
+      case 's':
+        position["j1"] = -90;
+        position["j2"] = 0;
+        position["j3"] = 0;
+        position["j4"] = 0;
+        position["j5"] = 0;
+
+        setAllMotorFastSpeed(SPEED_FAST);
+        setAllMotorSlowSpeed(SPEED_SLOW);
+        setJointPositions(position);
+        break;
+      case 'a':
+        setAllMotorFastSpeed(SPEED_FAST);
+        setAllMotorSlowSpeed(SPEED_SLOW);
+        moveJoint(joints[0], 5);
+        printCurrentPos(); 
+        break;
+      case 'd':
+        setAllMotorFastSpeed(SPEED_FAST);
+        setAllMotorSlowSpeed(SPEED_SLOW);
+        moveJoint(joints[0], -5);
+        printCurrentPos(); 
         break;
       case 'p': 
         printCurrentPos(); 
@@ -29,6 +59,6 @@ void loop()
       case 'h':
         home();
         break;
-    }
+    } 
   }
 }

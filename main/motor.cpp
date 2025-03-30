@@ -34,11 +34,16 @@ void Motor::setSlowSpeed(long stepIntervalMicros) {
 
 void Motor::move(bool enableAcceleration = true) {
   if (enableAcceleration) {
+    long stepsRemaining = abs(_targetPosition - _currentPosition);
     if (_stepsTaken < _accelSteps) {
-      _adjustedStepIntervalMicros = (_slowStepIntervalMicros - ((_stepsTaken/_accelSteps) * (_slowStepIntervalMicros - _fastStepIntervalMicros)));
-    } else if (abs(_targetPosition - _currentPosition) - _stepsTaken < _accelSteps) {
-      _adjustedStepIntervalMicros = (_fastStepIntervalMicros + (((_accelSteps - abs(_targetPosition - _currentPosition)) / _accelSteps)*(_slowStepIntervalMicros - _fastStepIntervalMicros)));
-    } else {
+      float accelRatio = (float)_stepsTaken / _accelSteps;
+      _adjustedStepIntervalMicros = _slowStepIntervalMicros - accelRatio * (_slowStepIntervalMicros - _fastStepIntervalMicros);
+    }
+    else if (stepsRemaining < _accelSteps) {
+      float decelRatio = (float)stepsRemaining / _accelSteps;
+      _adjustedStepIntervalMicros = _fastStepIntervalMicros + (1.0 - decelRatio) * (_slowStepIntervalMicros - _fastStepIntervalMicros);
+    }
+    else {
       _adjustedStepIntervalMicros = _fastStepIntervalMicros;
     }
   } else {
@@ -90,10 +95,6 @@ void Motor::setSoftLimit(float softLimitMin, float softLimitMax) {
   }
   _softLimitMin = softLimitMin;
   _softLimitMax = softLimitMax;
-  Serial.print("Soft limits set to: ");
-  Serial.print(_softLimitMin);
-  Serial.print(" to ");
-  Serial.println(_softLimitMax);
 }
 
 float Motor::getSoftLimitMin() {
