@@ -44,13 +44,13 @@ void loop()
       case 'a':
         setAllMotorFastSpeed(SPEED_FAST);
         setAllMotorSlowSpeed(SPEED_SLOW);
-        moveJoint(joints[0], 5);
+        moveJoint(joints[0], 360);
         printCurrentPos(); 
         break;
       case 'd':
         setAllMotorFastSpeed(SPEED_FAST);
         setAllMotorSlowSpeed(SPEED_SLOW);
-        moveJoint(joints[0], -5);
+        moveJoint(joints[0], -360);
         printCurrentPos(); 
         break;
       case 'p': 
@@ -60,5 +60,8 @@ void loop()
         home();
         break;
     } 
-  }
+  } 
+  // else if (!isMoveSafe()) {
+  //   Serial.println("LIMIT SWITCH TRIGGERED");
+  // }
 }

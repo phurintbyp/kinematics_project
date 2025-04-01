@@ -3,16 +3,15 @@
 #include "config.h"
 
 void initSafetyPins() {
-  pinMode(X_MIN, INPUT_PULLUP);
-  pinMode(X_MAX, INPUT_PULLUP);
-  pinMode(Y_MIN, INPUT_PULLUP);
-  pinMode(Y_MAX, INPUT_PULLUP);
-  pinMode(Z_MIN, INPUT_PULLUP);
-  pinMode(Z_MAX, INPUT_PULLUP);
+  pinMode(hardLimit[0], INPUT_PULLUP);
+  pinMode(hardLimit[1], INPUT_PULLUP);
+  pinMode(hardLimit[2], INPUT_PULLUP);
+  pinMode(hardLimit[3], INPUT_PULLUP);
+  pinMode(hardLimit[4], INPUT_PULLUP);
 }
 
 bool isMoveSafe() {
-  if (digitalRead(X_MIN) == LOW) {
+  if (digitalRead(hardLimit[0]) == LOW || digitalRead(hardLimit[1]) == LOW) {
     return false;
   } else {
     return true;

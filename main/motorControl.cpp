@@ -52,7 +52,7 @@ float stepsToAngle(long angle) {
   return angle * MICROSTEP_ANGLE;
 }
 
-void setJointPositions(JsonObject &positions, bool homing = false) {
+void setJointPositions(JsonObject &positions) {
   float angle[5] = {
     positions["j1"],
     positions["j2"],
@@ -72,37 +72,37 @@ void setJointPositions(JsonObject &positions, bool homing = false) {
   }
   
   while (!joints[0].hasReachedTarget() || !joints[1].hasReachedTarget() || !joints[2].hasReachedTarget() || !joints[3].hasReachedTarget() || !joints[4].hasReachedTarget()) {
-      if (!isMoveSafe() && !homing) {
+      if (!isMoveSafe()) {
         Serial.println("LIMIT SWITCH TRIGGERED!");
         stopAll();
         break;
       }else {
-        moveAll();
+        moveAll(true);
       }
   }
   resetAllMotors();
   Serial.println("All motors reached their target!");
 }
 
-void moveAll(){
+void moveAll(bool enableAcceleration = true){
   if (joints[0].getCurrentPosition() != joints[0].getTargetPosition()) {
-    joints[0].move();
+    joints[0].move(enableAcceleration);
   }
 
   if (joints[1].getCurrentPosition() != joints[1].getTargetPosition()) {
-    joints[1].move();
+    joints[1].move(enableAcceleration);
   }
 
   if (joints[2].getCurrentPosition() != joints[2].getTargetPosition()) {
-    joints[2].move();
+    joints[2].move(enableAcceleration);
   }
 
   if (joints[3].getCurrentPosition() != joints[3].getTargetPosition()) {
-    joints[3].move();
+    joints[3].move(enableAcceleration);
   }
 
   if (joints[4].getCurrentPosition() != joints[4].getTargetPosition()) {
-    joints[4].move();
+    joints[4].move(enableAcceleration);
   }
 }
 
@@ -130,42 +130,34 @@ void setAllSoftLimits(float m1Min, float m1Max, float m2Min, float m2Max, float 
   joints[4].setSoftLimit(m5Min, m5Max);
 }
 
-void home(){
-  pos["j1"] = joints[0].getCurrentPosition() + HOMING_PULL_OFF;
-  pos["j2"] = joints[1].getCurrentPosition() + HOMING_PULL_OFF;
-  pos["j3"] = joints[2].getCurrentPosition() + HOMING_PULL_OFF;
-  pos["j4"] = joints[3].getCurrentPosition() + HOMING_PULL_OFF;
-  pos["j5"] = joints[4].getCurrentPosition() + HOMING_PULL_OFF;
+void home() {
+  // Later implement homing for multiple joints here
+  findLimitSwitch(0, true);
+  moveJoint(joints[0], HOMING_PULL_OFF[0], true);
 
-  setAllMotorFastSpeed(HOMING_SEEK_SPEED);
-  findLimitSwitch();
-  setAllMotorFastSpeed(SPEED_FAST);
+  delay(200);
 
-  setJointPositions(pos, true);
+  findLimitSwitch(0, false);
+  moveJoint(joints[0], HOMING_PULL_OFF[0], true);
 
-  setAllMotorFastSpeed(HOMING_FEED_SPEED);
-  findLimitSwitch();
-  setAllMotorFastSpeed(SPEED_FAST);
-
-  setJointPositions(pos, true);
-
-  for (int i = 0; i < NUM_MOTORS; i++) {
-    joints[i].setCurrentPosition(0);
-  }
-  resetAllMotors();
-  Serial.println("Homing complete!");
+  joints[0].setCurrentPosition(0);
+  joints[0].reset();
+  Serial.println("Homing complete");
 }
 
-void findLimitSwitch() {
-  for (int i = 0; i < NUM_MOTORS; i++) {
-    joints[i].setDirection(LOW);
-  }
+void findLimitSwitch(int joint, bool seeking) {
+  float speed = seeking ? HOMING_SEEK_SPEED[joint] : HOMING_FEED_SPEED[joint];
+  joints[joint].setFastSpeed(speed);
+  Serial.println(HOMING_SEEK_SPEED[joint]);
+  joints[joint].setDirection(LOW);
 
-  while (digitalRead(X_MIN) == HIGH) {
-    for (int i = 0; i < NUM_MOTORS; i++) {
-      joints[i].move(false);
-    }
+  while (digitalRead(hardLimit[1]) == HIGH) {
+    joints[joint].move(false);
   }
+  joints[joint].setFastSpeed(SPEED_FAST[joint]);
+  // while (digitalRead(X_MAX) == HIGH) {
+  //   joints[1].move(false);
+  // }
 }
 
 void resetAllMotors() {
@@ -174,7 +166,7 @@ void resetAllMotors() {
   }
 }
 
-void moveJoint(Motor &motor, float increment) {
+void moveJoint(Motor &motor, float increment, bool homing = false) {
   float targetAngle = stepsToAngle(motor.getCurrentPosition()) + increment;
     if (motor.isBeyondSoftLimit(targetAngle)) {
       Serial.println("Target exceeds soft limit.");
@@ -185,7 +177,7 @@ void moveJoint(Motor &motor, float increment) {
     motor.setDirection(motor.getTargetPosition() > motor.getCurrentPosition() ? HIGH : LOW);
 
     while (!motor.hasReachedTarget()) {
-      if (!isMoveSafe()) {
+      if (!isMoveSafe() && !homing) {
         Serial.println("LIMIT SWITCH TRIGGERED!");
         motor.stop();
         break;

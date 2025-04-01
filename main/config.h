@@ -26,16 +26,12 @@
 #define M5_ENABLE 30
 
 // Limit Switches
-// For additional limit switches look at aux pins
-#define X_MIN 3
-#define X_MAX 2
-#define Y_MIN 14
-#define Y_MAX 15
-#define Z_MIN 18
-#define Z_MAX 19
+// For additional limit switches look at Z_MAX and aux pins
+
+const int hardLimit[NUM_MOTORS] = {3, 2, 14, 15, 18};
 
 #define M1_SOFT_MIN -360
-#define M1_SOFT_MAX 360
+#define M1_SOFT_MAX 11880
 #define M2_SOFT_MIN -360
 #define M2_SOFT_MAX 360
 #define M3_SOFT_MIN -360
@@ -46,17 +42,18 @@
 #define M5_SOFT_MAX 360
 
 #define HOMING_SEEK 1.5 // (1/1.5) speed
-#define HOMING_FEED 3 // (1/3) speed
-#define HOMING_PULL_OFF 15 // degrees
+#define HOMING_FEED 5 // (1/3) speed
+
+const int HOMING_PULL_OFF[NUM_MOTORS] = {360, 90, 90, 90, 90};
 
 //lower = higher speed
-const long SPEED_SLOW[5] = {1000, 1000, 1000, 1000, 1000};
-const long SPEED_FAST[5] = {150, 150, 150, 300, 300};
-const long HOMING_SEEK_SPEED[5] = {SPEED_FAST[0] * HOMING_SEEK, SPEED_FAST[1] * HOMING_SEEK, SPEED_FAST[2] * HOMING_SEEK, SPEED_FAST[3] * HOMING_SEEK, SPEED_FAST[4] * HOMING_SEEK};
-const long HOMING_FEED_SPEED[5] = {SPEED_FAST[0] * HOMING_FEED, SPEED_FAST[1] * HOMING_FEED, SPEED_FAST[2] * HOMING_FEED, SPEED_FAST[3] * HOMING_FEED, SPEED_FAST[4] * HOMING_FEED};
+const long SPEED_SLOW[NUM_MOTORS] = {500, 1000, 1000, 1000, 1000};
+const long SPEED_FAST[NUM_MOTORS] = {50, 150, 150, 300, 300};
+const long HOMING_SEEK_SPEED[NUM_MOTORS] = {SPEED_FAST[0] * HOMING_SEEK, SPEED_FAST[1] * HOMING_SEEK, SPEED_FAST[2] * HOMING_SEEK, SPEED_FAST[3] * HOMING_SEEK, SPEED_FAST[4] * HOMING_SEEK};
+const long HOMING_FEED_SPEED[NUM_MOTORS] = {SPEED_FAST[0] * HOMING_FEED, SPEED_FAST[1] * HOMING_FEED, SPEED_FAST[2] * HOMING_FEED, SPEED_FAST[3] * HOMING_FEED, SPEED_FAST[4] * HOMING_FEED};
 
 #define MICROSTEP_ANGLE 0.05625
 
-const long ACCEL_STEPS[5] = {400, 2000, 2000, 2000, 2000};
+const long ACCEL_STEPS[NUM_MOTORS] = {400, 2000, 2000, 2000, 2000};
 
 #endif
