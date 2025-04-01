@@ -39,7 +39,7 @@ void processCommand(String command) {
     // Handle setCartesianPosition
   }
   else if (strcmp(cmd, "estop") == 0) {
-    Serial.println("E-STOP");
+    stopAll();
   }
   else {
     Serial.println("Unknown command");

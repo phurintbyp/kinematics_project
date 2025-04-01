@@ -29,6 +29,7 @@ void initMotors()
   for (int i = 0; i < NUM_MOTORS; i++) {
     joints[i].enableMotor();
     joints[i].setAccelSteps(ACCEL_STEPS[i]);
+    joints[i].setDirectionInverted(MOTOR_INVERTED[i]);
   }
 }
 

@@ -17,7 +17,7 @@ class Motor {
     void disableMotor();
     void setTargetPosition(long target);
     void setDirection(bool dir);
-    
+    void setDirectionInverted(bool inverted);
     bool hasReachedTarget(); 
 
     long getCurrentPosition();
@@ -49,6 +49,7 @@ class Motor {
     long _stepsTaken;
     int _adjustedStepIntervalMicros;
     long _totalSteps;
+    bool _directionInverted = false;
 };
 
 #endif

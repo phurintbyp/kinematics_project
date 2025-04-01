@@ -42,9 +42,9 @@ const int hardLimit[NUM_MOTORS] = {3, 2, 14, 15, 18};
 #define M5_SOFT_MAX 360
 
 #define HOMING_SEEK 1.5 // (1/1.5) speed
-#define HOMING_FEED 5 // (1/3) speed
+#define HOMING_FEED 5 // (1/5) speed
 
-const int HOMING_PULL_OFF[NUM_MOTORS] = {360, 90, 90, 90, 90};
+const int HOMING_PULL_OFF[NUM_MOTORS] = {360, 90, 90, 90, 90}; // Degrees
 
 //lower = higher speed
 const long SPEED_SLOW[NUM_MOTORS] = {500, 1000, 1000, 1000, 1000};
@@ -55,5 +55,6 @@ const long HOMING_FEED_SPEED[NUM_MOTORS] = {SPEED_FAST[0] * HOMING_FEED, SPEED_F
 #define MICROSTEP_ANGLE 0.05625
 
 const long ACCEL_STEPS[NUM_MOTORS] = {400, 2000, 2000, 2000, 2000};
+const bool MOTOR_INVERTED[NUM_MOTORS] = {false, false, false, false, false};
 
 #endif

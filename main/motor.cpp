@@ -85,7 +85,8 @@ void Motor::setTotalSteps() {
 // }
 
 void Motor::setDirection(bool dir) {
-  digitalWrite(_dirPin, dir);
+  bool finalDir = _directionInverted ? !dir : dir;
+  digitalWrite(_dirPin, finalDir);
 }
 
 void Motor::setSoftLimit(float softLimitMin, float softLimitMax) {
@@ -143,4 +144,8 @@ void Motor::getAccelSteps(){
 
 void Motor::stop() {
   _targetPosition = _currentPosition;
+}
+
+void Motor::setDirectionInverted(bool inverted) {
+  _directionInverted = inverted;
 }
