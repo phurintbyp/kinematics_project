@@ -13,6 +13,21 @@
   margin-bottom: 10px;
 }
 
+.control-header h2 {
+  display: flex;
+  align-items: center;
+}
+
+.gamepad-connected {
+  font-size: 0.7rem;
+  color: #00cc66;
+  margin-left: 10px;
+  padding: 3px 8px;
+  background-color: rgba(0, 204, 102, 0.2);
+  border-radius: 4px;
+  font-weight: normal;
+}
+
 .control-title {
   margin: 0;
   font-size: 16px;
@@ -140,12 +155,23 @@
   color: #f0f0f0;
 }
 
-.mode-selector {
+.control-selector {
   display: flex;
-  margin-bottom: 0.7rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.mode-button {
+.mode-selector {
+  display: flex;
+  margin-bottom: 0.3rem;
+}
+
+.control-mode-selector {
+  display: flex;
+  margin-bottom: 0.3rem;
+}
+
+.mode-button, .control-mode-button {
   flex: 1;
   padding: 0.5rem;
   background-color: #333;
@@ -157,18 +183,25 @@
   font-size: 0.9rem;
 }
 
-.mode-button:first-child {
+.mode-button:first-child, .control-mode-button:first-child {
   border-radius: 4px 0 0 4px;
 }
 
-.mode-button:last-child {
+.mode-button:last-child, .control-mode-button:last-child {
   border-radius: 0 4px 4px 0;
 }
 
-.mode-button.active {
+.mode-button.active, .control-mode-button.active {
   background-color: #ff6a00;
   color: white;
   border-color: #e05e00;
+}
+
+.control-mode-button:disabled {
+  background-color: #2a2a2a;
+  color: #666;
+  border-color: #333;
+  cursor: not-allowed;
 }
 
 .velocity-control {
@@ -395,6 +428,12 @@
   color: #aaa;
 }
 
+/* Gamepad indicator styling */
+.keyboard-controls p:first-of-type {
+  color: #ff6a00;
+  font-weight: bold;
+}
+
 /* Work Zero Button */
 .set-work-zero {
   margin-top: 0.5rem;
@@ -407,6 +446,12 @@
   background-color: #333;
   border-radius: 3px;
   border: 1px solid #444;
+}
+
+/* Controls Container */
+.controls-container {
+  display: flex;
+  flex-direction: column;
 }
 
 .joint-controls h3 {

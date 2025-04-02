@@ -6,10 +6,8 @@ import asyncio
 import sys
 import os
 import time
-
 from config import SIMULATION_MODE
 from arduino_communication import ArduinoCommunicator
-
 from routers import motion, programs
 
 app = FastAPI(title="Robotic Arm Control API")
@@ -34,7 +32,7 @@ app.include_router(programs.router, prefix="/api", tags=["programs"])
 arduino = None
 if not SIMULATION_MODE:
     arduino = ArduinoCommunicator()
-    if not arduino.is_connected:
+    if not arduino.connected:
         print("WARNING: Failed to connect to Arduino. Operating in simulation mode.")
         sys.stdout.flush()
 

@@ -295,7 +295,6 @@ async def jog_motion_control(background_tasks: BackgroundTasks):
         sys.stdout.flush()
         jog_state['active'] = False
 
-
 async def handle_jog_start(data):
     """Handle start of jogging motion"""
     global jog_state
