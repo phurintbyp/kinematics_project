@@ -169,7 +169,7 @@ class ForwardKinematics:
         
         Args:
             joint_positions: Dictionary containing joint positions
-                
+       
         Returns:
             6x6 Jacobian matrix relating joint velocities to end effector velocities
         """
