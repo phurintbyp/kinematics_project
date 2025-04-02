@@ -87,7 +87,7 @@ void setJointPositions(JsonObject &positions) {
     }
     updateAll(true);
   }
-  Serial.println("move_done");
+  Serial.println("{“status”: “move_done”}");
 }
 
 // The function that your loop() will call frequently
@@ -166,9 +166,8 @@ void moveJoint(Motor &motor, float increment, bool homing) {
       motor.stop();
       break;
     }
-    motor.update(); 
+    motor.update(false); 
   }
-  Serial.println("moveJoint done");
 }
 
 
@@ -250,10 +249,7 @@ void updateHoming() {
         homingState = SECOND_PULL_OFF;
 
         // second pull off
-        float currentAngle = joints[homingJoint].getCurrentPosition() * MICROSTEP_ANGLE;
-        float targetAngle = currentAngle + pullOffDistance; 
-        long steps = (long)round(targetAngle / MICROSTEP_ANGLE);
-        joints[homingJoint].setTargetPosition(steps);
+        joints[homingJoint].setCurrentPosition(0);
         joints[homingJoint].reset();
 
         Serial.println("Switch triggered again -> second pull off");
@@ -295,7 +291,7 @@ void homeAll() {
   for (int j = 0; j < NUM_MOTORS; j++) {
     home(j);  // blocking call from above
   }
-  Serial.println("home_done");
+  Serial.println("{“status”: “home_done”}");
 }
 
 long angleToSteps(float angle) {
