@@ -16,51 +16,6 @@ void setup()
 
 void loop()
 {
-  // if (Serial.available() && isMoveSafe()) {
-  //   char command = Serial.read();
-  //   switch (command) {
-  //     case 'w': 
-  //       position["j1"] = 90;
-  //       position["j2"] = 0;
-  //       position["j3"] = 0;
-  //       position["j4"] = 0;
-  //       position["j5"] = 0;
-
-  //       setAllMotorFastSpeed(SPEED_FAST);
-  //       setAllMotorSlowSpeed(SPEED_SLOW);
-  //       setJointPositions(position);
-  //       break;
-  //     case 's':
-  //       position["j1"] = -90;
-  //       position["j2"] = 0;
-  //       position["j3"] = 0;
-  //       position["j4"] = 0;
-  //       position["j5"] = 0;
-
-  //       setAllMotorFastSpeed(SPEED_FAST);
-  //       setAllMotorSlowSpeed(SPEED_SLOW);
-  //       setJointPositions(position);
-  //       break;
-  //     case 'a':
-  //       setAllMotorFastSpeed(SPEED_FAST);
-  //       setAllMotorSlowSpeed(SPEED_SLOW);
-  //       moveJoint(joints[0], 360);
-  //       printCurrentPos(); 
-  //       break;
-  //     case 'd':
-  //       setAllMotorFastSpeed(SPEED_FAST);
-  //       setAllMotorSlowSpeed(SPEED_SLOW);
-  //       moveJoint(joints[0], -360);
-  //       printCurrentPos(); 
-  //       break;
-  //     case 'p': 
-  //       printCurrentPos(); 
-  //       break;
-  //     case 'h':
-  //       home();
-  //       break;
-  //   } 
-  // } 
   if (Serial.available() > 0) {
     String command = readSerialCommand();  // Read the incoming JSON command
     Serial.println(command);

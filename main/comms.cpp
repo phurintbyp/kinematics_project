@@ -22,6 +22,8 @@ void processCommand(String command) {
 
   if (strcmp(cmd, "setJointPositions") == 0) {
     JsonObject pos = doc["positions"];
+    setAllMotorFastSpeed(SPEED_FAST);
+    setAllMotorSlowSpeed(SPEED_SLOW);
     setJointPositions(pos);
   }
   else if (strcmp(cmd, "moveJoint") == 0) {
@@ -30,6 +32,8 @@ void processCommand(String command) {
 
     if (joint[0] == 'j' && joint[1] >= '1' && joint[1] <= '5') {
       int index = joint[1] - '1';
+      joints[index].setFastSpeed(SPEED_FAST[index]);
+      joints[index].setSlowSpeed(SPEED_SLOW[index]);
       moveJoint(joints[index], increment);
     } else {
       Serial.println("Unknown joint");

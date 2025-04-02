@@ -11,7 +11,7 @@ void initSafetyPins() {
 }
 
 bool isMoveSafe() {
-  if (digitalRead(hardLimit[0]) == LOW || digitalRead(hardLimit[1]) == LOW) {
+  if (digitalRead(hardLimit[1]) == LOW) {
     return false;
   } else {
     return true;
