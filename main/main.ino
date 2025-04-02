@@ -22,8 +22,5 @@ void loop()
       processCommand(command);             // parse JSON and set target positions
     }
   }
-
-  updateAll(true);
-
   // 3) Optional: check safety or other code here
 }

@@ -45,6 +45,9 @@ void processCommand(String command) {
   else if (strcmp(cmd, "home") == 0) {
     homeAll();
   }
+  else if (strcmp(cmd, "getPosition") == 0) {
+    printCurrentPos();
+  }
   else {
     Serial.println("Unknown command");
   }

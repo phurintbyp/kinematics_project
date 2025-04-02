@@ -79,8 +79,15 @@ void setJointPositions(JsonObject &positions) {
     joints[i].setDirection(joints[i].getTargetPosition() > joints[i].getCurrentPosition() ? HIGH : LOW);
     joints[i].reset(); // So it can accelerate from 0 again
   }
-
-  // Then let loop handle the actual stepping
+  while (!joints[0].hasReachedTarget() || !joints[1].hasReachedTarget() || !joints[2].hasReachedTarget() || !joints[3].hasReachedTarget() || !joints[4].hasReachedTarget() ) {
+    if (!isMoveSafe()) {
+      Serial.println("LIMIT SWITCH TRIGGERED!");
+      stopAll();
+      break;
+    }
+    updateAll(true);
+  }
+  Serial.println("move_done");
 }
 
 // The function that your loop() will call frequently
@@ -288,7 +295,7 @@ void homeAll() {
   for (int j = 0; j < NUM_MOTORS; j++) {
     home(j);  // blocking call from above
   }
-  Serial.println("All joints homed!");
+  Serial.println("home_done");
 }
 
 long angleToSteps(float angle) {
