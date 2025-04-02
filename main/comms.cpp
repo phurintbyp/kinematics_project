@@ -39,9 +39,6 @@ void processCommand(String command) {
       Serial.println("Unknown joint");
     }
   }
-  else if (strcmp(cmd, "setCartesianPosition") == 0) {
-    // Handle setCartesianPosition
-  }
   else if (strcmp(cmd, "estop") == 0) {
     stopAll();
   }
