@@ -89,31 +89,6 @@ void Motor::setDirection(bool dir) {
   digitalWrite(_dirPin, finalDir);
 }
 
-void Motor::setSoftLimit(float softLimitMin, float softLimitMax) {
-  if (softLimitMin > softLimitMax) {
-    Serial.println("Error: Min limit cannot be greater than max limit.");
-    return;
-  }
-  _softLimitMin = softLimitMin;
-  _softLimitMax = softLimitMax;
-}
-
-float Motor::getSoftLimitMin() {
-  return _softLimitMin;
-}
-
-float Motor::getSoftLimitMax() {
-  return _softLimitMax;
-}
-
-bool Motor::isBeyondSoftLimit(float angle) {
-  if (angle < _softLimitMin || angle > _softLimitMax) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 void Motor::setTargetPosition(long target) {
   _targetPosition = target;  // Set the target position
 }

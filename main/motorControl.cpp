@@ -63,10 +63,6 @@ void setJointPositions(JsonObject &positions) {
   };
 
   for (int i = 0; i < NUM_MOTORS; i++) {
-    if (joints[i].isBeyondSoftLimit(angle[i])) {
-      Serial.println("Target position exceeds set soft limit.");
-      return;
-    }
     joints[i].setTargetPosition(angleToSteps(angle[i]));
     joints[i].setTotalSteps();
     joints[i].setDirection(joints[i].getTargetPosition() > joints[i].getCurrentPosition() ? HIGH : LOW);
@@ -123,14 +119,6 @@ void printCurrentPos(){
   Serial.println("------------------------------");
 }
 
-void setAllSoftLimits(float m1Min, float m1Max, float m2Min, float m2Max, float m3Min, float m3Max, float m4Min, float m4Max, float m5Min, float m5Max) {
-  joints[0].setSoftLimit(m1Min, m1Max);
-  joints[1].setSoftLimit(m2Min, m2Max);
-  joints[2].setSoftLimit(m3Min, m3Max);
-  joints[3].setSoftLimit(m4Min, m4Max);
-  joints[4].setSoftLimit(m5Min, m5Max);
-}
-
 void home() {
   // Later implement homing for multiple joints here
   findLimitSwitch(0, true);
@@ -169,10 +157,6 @@ void resetAllMotors() {
 
 void moveJoint(Motor &motor, float increment, bool homing = false) {
   float targetAngle = stepsToAngle(motor.getCurrentPosition()) + increment;
-    if (motor.isBeyondSoftLimit(targetAngle)) {
-      Serial.println("Target exceeds soft limit.");
-      return;
-    }
     motor.setTargetPosition(angleToSteps(targetAngle));
     motor.setTotalSteps();
     motor.setDirection(motor.getTargetPosition() > motor.getCurrentPosition() ? HIGH : LOW);

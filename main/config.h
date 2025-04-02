@@ -30,17 +30,6 @@
 
 const int hardLimit[NUM_MOTORS] = {3, 2, 14, 15, 18};
 
-#define M1_SOFT_MIN -360
-#define M1_SOFT_MAX 11880
-#define M2_SOFT_MIN -360
-#define M2_SOFT_MAX 360
-#define M3_SOFT_MIN -360
-#define M3_SOFT_MAX 360
-#define M4_SOFT_MIN -360
-#define M4_SOFT_MAX 360
-#define M5_SOFT_MIN -360
-#define M5_SOFT_MAX 360
-
 #define HOMING_SEEK 1.5 // (1/1.5) speed
 #define HOMING_FEED 5 // (1/5) speed
 

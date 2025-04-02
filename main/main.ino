@@ -11,7 +11,6 @@ void setup()
 {
   Serial.begin(115200);
   initMotors();
-  setAllSoftLimits(M1_SOFT_MIN, M1_SOFT_MAX, M2_SOFT_MIN, M2_SOFT_MAX, M3_SOFT_MIN, M3_SOFT_MAX, M4_SOFT_MIN, M4_SOFT_MAX, M5_SOFT_MIN, M5_SOFT_MAX);
 }
 
 void loop()

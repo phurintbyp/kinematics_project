@@ -23,14 +23,10 @@ class Motor {
     long getCurrentPosition();
 
     long getTargetPosition();
-    void setSoftLimit(float softLimitMin, float softLimitMax);
-    float getSoftLimitMin();
-    float getSoftLimitMax();
     void setAccelSteps(long accelSteps);
     void getAccelSteps();
     void stop();
     void setCurrentPosition(long pos);
-    bool isBeyondSoftLimit(float angle);
     void setTotalSteps();
     void reset();
 
@@ -43,8 +39,6 @@ class Motor {
     long _numSteps;
     long _currentPosition;
     long _targetPosition;
-    float _softLimitMin;
-    float _softLimitMax;
     long _accelSteps;
     long _stepsTaken;
     int _adjustedStepIntervalMicros;
