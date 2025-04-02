@@ -182,7 +182,7 @@ const App = () => {
     <div className="pendant-ui">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="logo">WorkBee</div>
+        <div className="logo">MaejooRobotics</div>
         <nav className="sidebar-nav">
           <div 
             className={`nav-item ${activeTab === 'control' ? 'active' : ''}`}
