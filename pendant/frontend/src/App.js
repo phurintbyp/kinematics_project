@@ -28,6 +28,7 @@ const App = () => {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('control'); // 'control' or 'programming'
+  const [homingInProgress, setHomingInProgress] = useState(false);
 
   // Create a singleton WebSocket to prevent duplicate connections
   const [wsInstance] = useState(() => {
@@ -128,6 +129,40 @@ const App = () => {
       }
     };
   }, []);
+
+  // Update the WebSocket message handler to track homing status
+  useEffect(() => {
+    if (!websocket) return;
+    
+    const handleWebSocketMessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'position_update') {
+          setJointPositions(data.joint_positions);
+          setEePosition(data.ee_position);
+        }
+        
+        // Handle homing status updates
+        if (data.type === 'homing_status') {
+          if (data.status === 'started') {
+            setHomingInProgress(true);
+            console.log('Homing started');
+          } else if (data.status === 'completed' || data.status === 'failed') {
+            setHomingInProgress(false);
+            console.log('Homing completed or failed');
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    websocket.addEventListener('message', handleWebSocketMessage);
+    return () => {
+      websocket.removeEventListener('message', handleWebSocketMessage);
+    };
+  }, [websocket]);
 
   // Fetch initial positions from the API
   useEffect(() => {
@@ -234,58 +269,18 @@ const App = () => {
           {activeTab === 'control' && (
             <div className="control-section">
               <div className="position-panels">
-                <div className="position-panel">
-                  <h3 className="panel-title">Machine Position</h3>
-                  <div className="position-values">
-                    <div className="position-row">
-                      <div className="position-label">X</div>
-                      <div className="position-value">{eePosition.x.toFixed(3)}</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">Y</div>
-                      <div className="position-value">{eePosition.y.toFixed(3)}</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">Z</div>
-                      <div className="position-value">{eePosition.z.toFixed(3)}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="position-panel">
-                  <h3 className="panel-title">Joint Positions</h3>
-                  <div className="position-values">
-                    <div className="position-row">
-                      <div className="position-label">Base</div>
-                      <div className="position-value">{jointPositions.base_rotation.toFixed(1)}°</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">Shoulder</div>
-                      <div className="position-value">{jointPositions.shoulder_rotation.toFixed(1)}°</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">Extension</div>
-                      <div className="position-value">{jointPositions.prismatic_extension.toFixed(1)}mm</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">Elbow</div>
-                      <div className="position-value">{jointPositions.elbow_rotation.toFixed(1)}°</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">Elbow2</div>
-                      <div className="position-value">{jointPositions.elbow2_rotation.toFixed(1)}°</div>
-                    </div>
-                    <div className="position-row">
-                      <div className="position-label">End Effector</div>
-                      <div className="position-value">{jointPositions.end_effector_rotation.toFixed(1)}°</div>
-                    </div>
-                  </div>
-                </div>
+                <PositionDisplay 
+                  jointPositions={jointPositions}
+                  eePosition={eePosition}
+                  homingInProgress={homingInProgress}
+                />
               </div>
 
               <div className="jog-control-container">
                 <JogControl 
                   sendWebSocketMessage={sendWebSocketMessage}
+                  setHomingInProgress={setHomingInProgress}
+                  homingInProgress={homingInProgress}
                 />
               </div>
             </div>

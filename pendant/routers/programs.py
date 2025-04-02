@@ -86,9 +86,20 @@ def load_data_from_file(filename, default=None):
         sys.stdout.flush()
         return default if default is not None else {}
 
+# Add a new event to track move completion
+move_complete_event = asyncio.Event()
+
+async def move_completed_callback():
+    """Callback when a move is completed by the Arduino"""
+    print("Move completed callback triggered, setting event")
+    sys.stdout.flush()
+    move_complete_event.set()
+
 # Program execution
 async def execute_program(program_id, background_tasks: BackgroundTasks):
     """Execute a program by ID"""
+    global move_complete_event
+    
     if program_id not in programs:
         print(f"Program {program_id} not found")
         sys.stdout.flush()
@@ -135,10 +146,78 @@ async def execute_program(program_id, background_tasks: BackgroundTasks):
         
         # Execute step based on type
         success = False
-        if step_type == "moveJ":
-            success = await motion.handle_moveJ(step_data)
-        elif step_type == "moveL":
-            success = await motion.handle_moveL(step_data)
+        if step_type == "moveJ" or step_type == "moveL":
+            # Clear the move complete event before sending the command
+            move_complete_event.clear()
+            print(f"Move complete event cleared for step {step_index}")
+            sys.stdout.flush()
+            
+            # Register the callback with motion module
+            motion.register_move_complete_callback(move_completed_callback)
+            print(f"Move complete callback registered for step {step_index}")
+            sys.stdout.flush()
+            
+            # Execute the move command
+            if step_type == "moveJ":
+                success = await motion.handle_moveJ(step_data)
+            else:  # moveL
+                success = await motion.handle_moveL(step_data)
+            
+            if success:
+                # Only wait for Arduino response if in real hardware mode
+                if not motion.SIMULATION_MODE and motion.arduino_communicator:
+                    print(f"Waiting for Arduino to complete the move for step {step_index}")
+                    sys.stdout.flush()
+                    
+                    # Wait for Arduino to signal move completion
+                    try:
+                        # Wait with a timeout of 60 seconds
+                        await asyncio.wait_for(move_complete_event.wait(), 60.0)
+                        print(f"Move completed for step {step_index}")
+                        sys.stdout.flush()
+                    except asyncio.TimeoutError:
+                        print(f"Timeout waiting for Arduino to complete move for step {step_index}")
+                        sys.stdout.flush()
+                        success = False
+                    finally:
+                        # Unregister the callback
+                        motion.unregister_move_complete_callback(move_completed_callback)
+                else:
+                    # Add a simulated delay even in simulation mode
+                    # Calculate a realistic delay based on the movement distance and complexity
+                    if step_type == "moveJ":
+                        # Estimate some time for joint movement (more complex calculation could be added)
+                        joint_positions = step_data.get("joint_positions", {})
+                        # Get a rough estimate of movement magnitude
+                        position_changes = []
+                        for joint, value in joint_positions.items():
+                            if joint in motion.current_joint_positions:
+                                change = abs(value - motion.current_joint_positions[joint])
+                                position_changes.append(change)
+                        
+                        # Base delay on the largest joint movement (at least 0.5 seconds)
+                        delay = max(0.5, max(position_changes) / 30.0) if position_changes else 1.0
+                    else:  # moveL
+                        # Estimate time for linear movement
+                        position = step_data.get("position", {})
+                        # Calculate Euclidean distance for position change
+                        distance = 0
+                        for axis in ['x', 'y', 'z']:
+                            if axis in position and axis in motion.current_ee_position:
+                                distance += (position[axis] - motion.current_ee_position[axis])**2
+                        distance = distance**0.5
+                        
+                        # Base delay on distance (at least 0.5 seconds)
+                        delay = max(0.5, distance / 100.0) if distance > 0 else 1.0
+                    
+                    # Cap the delay at a reasonable maximum
+                    delay = min(delay, 5.0)
+                    
+                    print(f"Simulation mode: Waiting {delay:.2f} seconds for simulated move completion")
+                    sys.stdout.flush()
+                    await asyncio.sleep(delay)
+                    print(f"Simulation mode: Move completed for step {step_index}")
+                    sys.stdout.flush()
         elif step_type == "wait":
             # Wait for specified time in seconds
             wait_time = step_data.get("time", 1)

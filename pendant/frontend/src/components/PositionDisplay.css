@@ -1,23 +1,25 @@
 .position-display {
   padding: 1rem;
-  background-color: #fff;
+  background-color: #252525; /* Dark background to match the theme */
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .position-display h2 {
   margin-top: 0;
-  color: #2c3e50;
-  border-bottom: 2px solid #3498db;
+  color: #f0f0f0; /* Light text color for dark background */
+  border-bottom: 2px solid #ff6a00; /* Theme color */
   padding-bottom: 0.5rem;
 }
 
 .position-section {
   margin-bottom: 1.5rem;
+  flex: 1;
+  min-width: 0; /* Prevents flex items from overflowing */
 }
 
 .position-section h3 {
-  color: #2c3e50;
+  color: #f0f0f0; /* Light text color for dark background */
   font-size: 1.1rem;
   margin-bottom: 0.8rem;
 }
@@ -29,7 +31,7 @@
 
 .position-table td {
   padding: 0.6rem;
-  border-bottom: 1px solid #ecf0f1;
+  border-bottom: 1px solid #333; /* Darker divider for dark theme */
 }
 
 .position-table tr:last-child td {
@@ -38,12 +40,65 @@
 
 .position-table td:first-child {
   font-weight: bold;
-  color: #34495e;
+  color: #b0b0b0; /* Light but not too bright */
   width: 60%;
 }
 
 .position-table td:last-child {
   text-align: right;
   font-family: 'Roboto Mono', monospace;
-  color: #2980b9;
+  color: #ff6a00; /* Theme color */
+}
+
+/* Add this to make the tables side by side */
+.position-tables-container {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+/* Media query for mobile screens */
+@media (max-width: 768px) {
+  .position-tables-container {
+    flex-direction: column;
+  }
+}
+
+/* Keep the shimmer effect and homing indicator */
+.homing-indicator {
+  font-size: 0.8rem;
+  color: #ff6a00;
+  margin-left: 10px;
+  padding: 3px 8px;
+  background-color: rgba(255, 106, 0, 0.2);
+  border-radius: 4px;
+  font-weight: normal;
+}
+
+.waiting-cell {
+  text-align: right;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.waiting-text {
+  display: inline-block;
+  background: linear-gradient(
+    90deg, 
+    #ff6a00 0%, 
+    #ffaa33 35%, 
+    #ff6a00 70%, 
+    #ff6a00 100%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 1.5s linear infinite;
+  font-weight: bold;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
 }

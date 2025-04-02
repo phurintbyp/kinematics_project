@@ -11,6 +11,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import JOG_CONFIG, JOG_INCREMENTS, JOINT_LIMITS, ROBOT_CONFIG, SIMULATION_MODE
 import kinematics
 
+# prismitic conversion
+MM_PER_ROTATION = 8.0
+DEGREES_PER_MM = 360.0 / MM_PER_ROTATION
+
 # Will be set by app.py
 arduino_communicator = None
 
@@ -22,7 +26,7 @@ ik = kinematics.InverseKinematics()
 current_joint_positions = {
     'base_rotation': 0,
     'shoulder_rotation': 0,
-    'prismatic_extension': 200,  # Start with some extension
+    'prismatic_extension': 0,  # Start with some extension
     'elbow_rotation': 0,
     'elbow2_rotation': 0,
     'end_effector_rotation': 0
@@ -40,6 +44,37 @@ jog_state = {
     'target_velocity': 0,  # Calculated target velocity
     'last_update_time': 0  # Time of last position update
 }
+
+# Add global variables for move completion callbacks
+move_complete_callbacks = []
+
+def register_move_complete_callback(callback):
+    """Register a callback to be called when a move is completed"""
+    global move_complete_callbacks
+    if callback not in move_complete_callbacks:
+        move_complete_callbacks.append(callback)
+
+def unregister_move_complete_callback(callback):
+    """Unregister a move completion callback"""
+    global move_complete_callbacks
+    if callback in move_complete_callbacks:
+        move_complete_callbacks.remove(callback)
+
+async def handle_move_done(data):
+    """Handle Arduino's move done notification"""
+    print("Received move done notification from Arduino")
+    print(f"Move done data: {data}")
+    print(f"Number of registered callbacks: {len(move_complete_callbacks)}")
+    sys.stdout.flush()
+    
+    # Call all registered callbacks
+    for callback in move_complete_callbacks:
+        print(f"Calling callback: {callback}")
+        sys.stdout.flush()
+        if asyncio.iscoroutinefunction(callback):
+            await callback()
+        else:
+            callback()
 
 class JogCommand(BaseModel):
     mode: str
@@ -208,14 +243,27 @@ def update_cartesian_position(axis, increment):
         sys.stdout.flush()
         return False
 
+def extension_to_rotation(extension_mm):
+    return extension_mm * DEGREES_PER_MM  # 45 degrees per mm
+
+def rotation_to_extension(rotation_deg):
+    return rotation_deg / DEGREES_PER_MM  # 1/45 mm per degree
+
 active_connections = []
 
 async def broadcast_position_update():
     """Broadcast current positions to all connected clients"""
+    # Create a copy of the current joint positions to avoid modifying the original
+    display_joint_positions = current_joint_positions.copy()
+    
+    # The joint positions are always stored in actual mm for the extension
+    # We don't need to convert anything here as the Arduino communication layer
+    # will handle the conversion when sending commands
+    
     message = {
         "type": "position_update",
         "timestamp": time.time(),
-        "joint_positions": current_joint_positions,
+        "joint_positions": display_joint_positions,
         "ee_position": current_ee_position
     }
     
@@ -233,7 +281,6 @@ async def broadcast_position_update():
 
 
 async def jog_motion_control(background_tasks: BackgroundTasks):
-    """Background task for continuous jogging motion"""
     global current_joint_positions, current_ee_position, jog_state
     
     print("Starting jog motion control background task")
@@ -299,7 +346,6 @@ async def handle_jog_start(data):
     """Handle start of jogging motion"""
     global jog_state
     
-    # Update jog state
     jog_state['active'] = True
     jog_state['mode'] = data.get('mode', 'joint')
     jog_state['direction'] = data.get('direction', 0)
@@ -307,7 +353,6 @@ async def handle_jog_start(data):
     jog_state['last_update_time'] = time.time()
     
     # Set target velocity based on the mode
-    # For joint mode
     if jog_state['mode'] == 'joint':
         jog_state['joint'] = data.get('joint')
         jog_state['axis'] = None
@@ -410,14 +455,23 @@ async def handle_jog_increment(data):
             current_ee_position = fk.calculate(current_joint_positions)
             position_updated = True
             
-            print(f"Jogged joint {joint} by {actual_increment} degrees: {old_position} -> {new_position}")
+            print(f"Jogged joint {joint} by {actual_increment} {'mm' if joint == 'prismatic_extension' else 'degrees'}: {old_position} -> {new_position}")
             sys.stdout.flush()
             
             # Send command to Arduino if connected and not in simulation mode
             if arduino_communicator and not SIMULATION_MODE:
-                success = arduino_communicator.send_joint_command(current_joint_positions)
+                # Create a copy of joint positions for Arduino with converted prismatic extension
+                arduino_joint_positions = current_joint_positions.copy()
+                
+                if joint == 'prismatic_extension':
+                    # Convert mm to rotation degrees for the stepper motor
+                    arduino_joint_positions['prismatic_extension'] = extension_to_rotation(arduino_joint_positions['prismatic_extension'])
+                    print(f"Converting {current_joint_positions['prismatic_extension']}mm to {arduino_joint_positions['prismatic_extension']} degrees rotation")
+                    sys.stdout.flush()
+                
+                success = arduino_communicator.send_joint_command(arduino_joint_positions)
                 if success:
-                    print(f"Jog command sent to Arduino: {current_joint_positions}")
+                    print(f"Jog command sent to Arduino: {arduino_joint_positions}")
                 else:
                     print("Failed to send jog command to Arduino")
                 sys.stdout.flush()
@@ -490,9 +544,17 @@ async def handle_moveJ(data):
     
     # Send command to Arduino if connected and not in simulation mode
     if arduino_communicator and not SIMULATION_MODE:
-        success = arduino_communicator.send_joint_command(current_joint_positions)
+        # Create a copy of joint positions for Arduino with converted prismatic extension
+        arduino_joint_positions = current_joint_positions.copy()
+        
+        # Convert prismatic extension from mm to rotation degrees
+        arduino_joint_positions['prismatic_extension'] = extension_to_rotation(arduino_joint_positions['prismatic_extension'])
+        print(f"Converting prismatic extension {current_joint_positions['prismatic_extension']}mm to {arduino_joint_positions['prismatic_extension']} degrees rotation")
+        sys.stdout.flush()
+        
+        success = arduino_communicator.send_joint_command(arduino_joint_positions)
         if success:
-            print(f"MoveJ command sent to Arduino: {current_joint_positions}")
+            print(f"MoveJ command sent to Arduino: {arduino_joint_positions}")
         else:
             print("Failed to send moveJ command to Arduino")
         sys.stdout.flush()
@@ -557,9 +619,17 @@ async def handle_moveL(data):
     
     # Send command to Arduino if connected and not in simulation mode
     if arduino_communicator and not SIMULATION_MODE:
-        success = arduino_communicator.send_joint_command(current_joint_positions)
+        # Create a copy of joint positions for Arduino with converted prismatic extension
+        arduino_joint_positions = current_joint_positions.copy()
+        
+        # Convert prismatic extension from mm to rotation degrees
+        arduino_joint_positions['prismatic_extension'] = extension_to_rotation(arduino_joint_positions['prismatic_extension'])
+        print(f"Converting prismatic extension {current_joint_positions['prismatic_extension']}mm to {arduino_joint_positions['prismatic_extension']} degrees rotation")
+        sys.stdout.flush()
+        
+        success = arduino_communicator.send_joint_command(arduino_joint_positions)
         if success:
-            print(f"MoveL command sent to Arduino: {current_joint_positions}")
+            print(f"MoveL command sent to Arduino: {arduino_joint_positions}")
         else:
             print("Failed to send moveL command to Arduino")
         sys.stdout.flush()
@@ -595,6 +665,70 @@ async def handle_emergency_stop():
             pass
     
     return True
+
+async def handle_home():
+    """Handle home command - send home command to Arduino and wait for completion"""
+    print(f"Sending home command to Arduino")
+    sys.stdout.flush()
+    
+    # Send direct home command to Arduino if connected and not in simulation mode
+    if arduino_communicator and not SIMULATION_MODE:
+        # Use WebSocket to inform clients that homing has started
+        message = {
+            "type": "homing_status",
+            "status": "started",
+            "timestamp": time.time()
+        }
+        for connection in active_connections:
+            try:
+                await connection.send_json(message)
+            except:
+                pass
+        
+        # Send the home command and wait for completion
+        success = arduino_communicator.send_home_command()
+        
+        # Notify clients about the homing result
+        result_message = {
+            "type": "homing_status",
+            "status": "completed" if success else "failed",
+            "timestamp": time.time()
+        }
+        for connection in active_connections:
+            try:
+                await connection.send_json(result_message)
+            except:
+                pass
+        
+        if success:
+            print(f"Homing completed successfully")
+            sys.stdout.flush()
+            return True
+        else:
+            print("Failed to complete homing")
+            sys.stdout.flush()
+            return False
+    else:
+        # If in simulation mode, we still consider it a success
+        print("Simulation mode: Home command simulated")
+        sys.stdout.flush()
+        
+        # Simulate a brief delay for homing
+        await asyncio.sleep(2)
+        
+        # Notify clients that homing is complete
+        message = {
+            "type": "homing_status",
+            "status": "completed",
+            "timestamp": time.time()
+        }
+        for connection in active_connections:
+            try:
+                await connection.send_json(message)
+            except:
+                pass
+        
+        return True
 
 
 @router.get("/joint_positions")
@@ -646,4 +780,10 @@ async def api_moveJ(command: MoveJCommand):
 async def api_moveL(command: MoveLCommand):
     """Execute a moveL command"""
     success = await handle_moveL(command.dict())
+    return {"success": success}
+
+@router.post("/home")
+async def api_home():
+    """Home the robot to its predefined home position"""
+    success = await handle_home()
     return {"success": success}
