@@ -33,7 +33,7 @@ const int hardLimit[NUM_MOTORS] = {3, 2, 14, 15, 18};
 #define HOMING_SEEK 1.5 // (1/1.5) speed
 #define HOMING_FEED 5 // (1/5) speed
 
-const int HOMING_PULL_OFF[NUM_MOTORS] = {360, 90, 90, 90, 90}; // Degrees
+const int HOMING_PULL_OFF[NUM_MOTORS] = {90, 90, 90, 90, 90}; // Degrees
 
 //lower = higher speed
 const long SPEED_SLOW[NUM_MOTORS] = {500, 500, 500, 1000, 1000};

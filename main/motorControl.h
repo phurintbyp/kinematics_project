@@ -17,8 +17,17 @@ void setAllMotorFastSpeed(long speeds[]);
 void setAllMotorSlowSpeed(long speeds[]);
 void moveAll(bool enableAcceleration = true);
 void stopAll();
-void home();
 void findLimitSwitch(int joint, bool seeking);
 void resetAllMotors();
+void updateAll(bool enableAcceleration);
+void setAllMotorFastSpeed(long speeds[]);
+void setAllMotorSlowSpeed(long speeds[]);
+void findLimitSwitch(int joint, bool seeking = true);
+void home(int joint);
+void homeAll();
+void startHoming(int joint);
+void updateHoming();
+float stepsToAngle(long steps);
+long angleToSteps(float angle);
 
 #endif

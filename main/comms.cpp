@@ -42,6 +42,9 @@ void processCommand(String command) {
   else if (strcmp(cmd, "estop") == 0) {
     stopAll();
   }
+  else if (strcmp(cmd, "home") == 0) {
+    homeAll();
+  }
   else {
     Serial.println("Unknown command");
   }
