@@ -21,7 +21,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 frontend_build_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "build")
 if os.path.exists(frontend_build_path):
     app.mount("/static", StaticFiles(directory=os.path.join(frontend_build_path, "static")), name="static")
@@ -43,7 +42,6 @@ motion.arduino_communicator = arduino
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
-
     connection_id = len(motion.active_connections)
     motion.active_connections.append(websocket)
     
@@ -51,7 +49,6 @@ async def websocket_endpoint(websocket: WebSocket):
     sys.stdout.flush()
     
     try:
-
         initial_message = {
             "type": "position_update",
             "timestamp": time.time(),
@@ -62,7 +59,6 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"Position update sent to connection {connection_id}")
         sys.stdout.flush()
         
-
         while True:
             data = await websocket.receive_json()
             print(f"Received WebSocket message: {data}")
@@ -70,56 +66,97 @@ async def websocket_endpoint(websocket: WebSocket):
             
             message_type = data.get('type', '')
             
-            # Update handler for move_done message
-            if message_type == 'move_done':
-                await motion.handle_move_done(data)
+            # Process each message type in its own try-except block to prevent connection closing
+            try:
+                if message_type == 'move_done':
+                    await motion.handle_move_done(data)
+                    
+                elif message_type == 'jog_start':
+                    await motion.handle_jog_start(data)
+                    
+                    if motion.jog_state['active']:
+                        background_tasks = BackgroundTasks()
+                        background_tasks.add_task(motion.jog_motion_control, background_tasks)
                 
-            elif message_type == 'jog_start':
-                await motion.handle_jog_start(data)
+                elif message_type == 'jog_stop':
+                    await motion.handle_jog_stop()
                 
-
-                if motion.jog_state['active']:
-                    background_tasks = BackgroundTasks()
-                    background_tasks.add_task(motion.jog_motion_control, background_tasks)
-            
-            elif message_type == 'jog_stop':
-                await motion.handle_jog_stop()
-            
-            elif message_type == 'jog_velocity':
-                await motion.handle_jog_velocity(data)
-            
-            elif message_type == 'jog_increment':
-                await motion.handle_jog_increment(data)
-            
-            elif message_type == 'moveJ':
-                await motion.handle_moveJ(data)
-            
-            elif message_type == 'moveL':
-                await motion.handle_moveL(data)
-            
-            elif message_type == 'emergency_stop':
-                await motion.handle_emergency_stop()
-            
-            else:
-                print(f"Unknown message type: {message_type}")
+                elif message_type == 'jog_velocity':
+                    await motion.handle_jog_velocity(data)
+                
+                elif message_type == 'jog_increment':
+                    # Additional validation before passing to handler
+                    if mode := data.get('mode'):
+                        if mode == 'joint' and 'joint' not in data:
+                            print(f"Error: Missing 'joint' key in jog_increment message: {data}")
+                            sys.stdout.flush()
+                            await websocket.send_json({
+                                'type': 'error',
+                                'message': "Missing 'joint' key in jog_increment message",
+                                'timestamp': time.time()
+                            })
+                            continue
+                        
+                        if mode == 'cartesian' and 'axis' not in data:
+                            print(f"Error: Missing 'axis' key in jog_increment message: {data}")
+                            sys.stdout.flush()
+                            await websocket.send_json({
+                                'type': 'error',
+                                'message': "Missing 'axis' key in jog_increment message",
+                                'timestamp': time.time()
+                            })
+                            continue
+                    
+                    # Now process the command
+                    await motion.handle_jog_increment(data)
+                
+                elif message_type == 'moveJ':
+                    await motion.handle_moveJ(data)
+                
+                elif message_type == 'moveL':
+                    await motion.handle_moveL(data)
+                
+                elif message_type == 'emergency_stop':
+                    await motion.handle_emergency_stop()
+                
+                else:
+                    print(f"Unknown message type: {message_type}")
+                    sys.stdout.flush()
+                    await websocket.send_json({
+                        'type': 'error',
+                        'message': f"Unknown message type: {message_type}",
+                        'timestamp': time.time()
+                    })
+                    
+            except Exception as e:
+                # Send error back to client but don't close the connection
+                error_message = str(e)
+                print(f"Error processing {message_type} message: {error_message}")
                 sys.stdout.flush()
+                
+                try:
+                    await websocket.send_json({
+                        'type': 'error',
+                        'message': f"Error processing {message_type}: {error_message}",
+                        'timestamp': time.time()
+                    })
+                except Exception as send_error:
+                    print(f"Failed to send error message to client: {send_error}")
+                    sys.stdout.flush()
     
     except Exception as e:
         print(f"WebSocket error: {e}")
         sys.stdout.flush()
     
     finally:
-
         if websocket in motion.active_connections:
             motion.active_connections.remove(websocket)
         print(f"WebSocket connection closed. Active connections: {len(motion.active_connections)}")
         sys.stdout.flush()
 
-
 @app.get("/")
 def read_root():
     return {"message": "Robotic Arm Control API"}
-
 
 @app.get("/api/joint_positions")
 def get_joint_positions():
@@ -172,15 +209,11 @@ async def api_home():
 
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str, request: Request):
-
     frontend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "build")
-
-
     file_path = os.path.join(frontend_path, full_path)
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(file_path)
     
-
     index_path = os.path.join(frontend_path, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
@@ -189,7 +222,6 @@ async def serve_frontend(full_path: str, request: Request):
 
 @app.on_event("startup")
 async def startup_event():
-
     programs.saved_positions = programs.load_data_from_file("saved_positions.json", {})
     programs.programs = programs.load_data_from_file("programs.json", {})
     
