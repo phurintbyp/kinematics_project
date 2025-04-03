@@ -87,6 +87,23 @@
 
 .action-button.home-all {
   flex: 1;
+  background-color: #4CAF50; /* Green color for home button */
+}
+
+.action-button.home-all:hover {
+  background-color: #45a049;
+}
+
+.action-button.home-all.in-progress {
+  background-color: #ffa500; /* Orange color for homing in progress */
+  cursor: not-allowed;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 .action-button.compensation {

@@ -3,8 +3,9 @@ Configuration file for the RRPRRR robotic arm control system
 Contains robot dimensions, joint limits, Arduino communication settings, and simulation mode
 """
 
-# Simulation mode - set to True to run without Arduino hardware
-SIMULATION_MODE = True
+# Set to True to run in simulation mode without Arduino hardware
+# To enable hardware control, set this to False and ensure Arduino is connected
+SIMULATION_MODE = True  # Change to False for real hardware control
 
 # Arduino communication settings
 ARDUINO_CONFIG = {

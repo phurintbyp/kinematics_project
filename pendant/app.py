@@ -70,8 +70,11 @@ async def websocket_endpoint(websocket: WebSocket):
             
             message_type = data.get('type', '')
             
-
-            if message_type == 'jog_start':
+            # Update handler for move_done message
+            if message_type == 'move_done':
+                await motion.handle_move_done(data)
+                
+            elif message_type == 'jog_start':
                 await motion.handle_jog_start(data)
                 
 
@@ -162,6 +165,10 @@ def api_get_saved_positions():
 @app.delete("/api/saved_positions/{position_id}")
 def api_delete_position(position_id: str):
     return programs.api_delete_position(position_id)
+
+@app.post("/api/home")
+async def api_home():
+    return await motion.api_home()
 
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str, request: Request):

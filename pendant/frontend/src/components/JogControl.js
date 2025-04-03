@@ -2,19 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactSlider from 'react-slider';
 import './JogControl.css';
 
-const JogControl = ({ sendWebSocketMessage }) => {
+const JogControl = ({ sendWebSocketMessage, homingInProgress, setHomingInProgress }) => {
   const [mode, setMode] = useState('joint'); // 'joint' or 'cartesian'
   const [incrementSize, setIncrementSize] = useState(5); // Default increment size
-  const [gamepadConnected, setGamepadConnected] = useState(false);
-  const [activeJointIndex, setActiveJointIndex] = useState(0); // For gamepad joint selection
-  const [controlMode, setControlMode] = useState('keyboard'); // 'keyboard' or 'gamepad'
-  
-  // References to track gamepad state
-  const gamepadRef = useRef(null);
+  const [pendantConnected, setPendantConnected] = useState(false);
+  const [activeJointIndex, setActiveJointIndex] = useState(0); // For pendant joint selection
+  const [controlMode, setControlMode] = useState('keyboard'); // 'keyboard' or 'pendant'
+
+  // References to track pendant state
+  const pendantRef = useRef(null);
   const requestRef = useRef(null);
   const previousButtonsRef = useRef({});
   const joystickDeadzone = 0.15; // Deadzone for joystick to prevent drift
-  
+
   const joints = {
     base_rotation: 'Base',
     shoulder_rotation: 'Shoulder',
@@ -22,7 +22,7 @@ const JogControl = ({ sendWebSocketMessage }) => {
     elbow_rotation: 'Elbow',
     elbow2_rotation: 'Elbow2'
   };
-  
+
   const axes = {
     x: 'X',
     y: 'Y',
@@ -43,7 +43,7 @@ const JogControl = ({ sendWebSocketMessage }) => {
       }
       
       // Switch control mode
-      if (e.key === 'g') setControlMode('gamepad');
+      if (e.key === 'g') setControlMode('pendant');
       if (e.key === 'k') setControlMode('keyboard');
       
       // Mode switching
@@ -69,7 +69,7 @@ const JogControl = ({ sendWebSocketMessage }) => {
           'r': { joint: 'elbow_rotation', direction: 1 },
           'f': { joint: 'elbow_rotation', direction: -1 },
           't': { joint: 'elbow2_rotation', direction: 1 },
-          'g': { joint: 'elbow2_rotation', direction: -1 }
+          'h': { joint: 'elbow2_rotation', direction: -1 }
         };
         
         if (jointMap[e.key]) {
@@ -141,55 +141,55 @@ const JogControl = ({ sendWebSocketMessage }) => {
     setIncrementSize(closestIncrement);
   };
 
-  // Gamepad detection and handling
+  // Pendant detection and handling
   useEffect(() => {
-    const detectGamepad = () => {
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      for (let i = 0; i < gamepads.length; i++) {
-        if (gamepads[i]) {
-          gamepadRef.current = gamepads[i];
-          setGamepadConnected(true);
-          setControlMode('gamepad');
-          console.log('Gamepad connected:', gamepads[i].id);
+    const detectPendant = () => {
+      const pendants = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (let i = 0; i < pendants.length; i++) {
+        if (pendants[i]) {
+          pendantRef.current = pendants[i];
+          setPendantConnected(true);
+          setControlMode('pendant');
+          console.log('Pendant connected:', pendants[i].id);
           return;
         }
       }
-      gamepadRef.current = null;
-      setGamepadConnected(false);
+      pendantRef.current = null;
+      setPendantConnected(false);
     };
 
-    const handleGamepadConnected = (e) => {
-      console.log(`Gamepad connected at index ${e.gamepad.index}: ${e.gamepad.id}`);
-      gamepadRef.current = e.gamepad;
-      setGamepadConnected(true);
-      setControlMode('gamepad');
+    const handlePendantConnected = (e) => {
+      console.log(`Pendant connected at index ${e.gamepad.index}: ${e.gamepad.id}`);
+      pendantRef.current = e.gamepad;
+      setPendantConnected(true);
+      setControlMode('pendant');
     };
 
-    const handleGamepadDisconnected = (e) => {
-      console.log(`Gamepad disconnected at index ${e.gamepad.index}: ${e.gamepad.id}`);
-      gamepadRef.current = null;
-      setGamepadConnected(false);
+    const handlePendantDisconnected = (e) => {
+      console.log(`Pendant disconnected at index ${e.gamepad.index}: ${e.gamepad.id}`);
+      pendantRef.current = null;
+      setPendantConnected(false);
       setControlMode('keyboard');
     };
 
-    window.addEventListener('gamepadconnected', handleGamepadConnected);
-    window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
+    window.addEventListener('gamepadconnected', handlePendantConnected);
+    window.addEventListener('gamepaddisconnected', handlePendantDisconnected);
 
     // Initial detection
-    detectGamepad();
+    detectPendant();
 
     return () => {
-      window.removeEventListener('gamepadconnected', handleGamepadConnected);
-      window.removeEventListener('gamepaddisconnected', handleGamepadDisconnected);
+      window.removeEventListener('gamepadconnected', handlePendantConnected);
+      window.removeEventListener('gamepaddisconnected', handlePendantDisconnected);
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
       }
     };
   }, []);
 
-  // Gamepad polling
+  // Pendant polling
   useEffect(() => {
-    if (!gamepadConnected || controlMode !== 'gamepad') {
+    if (!pendantConnected || controlMode !== 'pendant') {
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
         requestRef.current = null;
@@ -199,39 +199,39 @@ const JogControl = ({ sendWebSocketMessage }) => {
 
     const jointKeys = Object.keys(joints);
     
-    const pollGamepad = () => {
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      const gamepad = gamepads[gamepadRef.current?.index || 0];
+    const pollPendant = () => {
+      const pendants = navigator.getGamepads ? navigator.getGamepads() : [];
+      const pendant = pendants[pendantRef.current?.index || 0];
       
-      if (!gamepad) {
-        requestRef.current = requestAnimationFrame(pollGamepad);
+      if (!pendant) {
+        requestRef.current = requestAnimationFrame(pollPendant);
         return;
       }
 
       // Initialize previous buttons state if it doesn't exist
       if (!previousButtonsRef.current) {
-        previousButtonsRef.current = gamepad.buttons.map(b => b.pressed);
+        previousButtonsRef.current = pendant.buttons.map(b => b.pressed);
       }
 
       // D-pad for joint selection in joint mode
-      if (gamepad.buttons[12].pressed && !previousButtonsRef.current[12]) { // D-pad Up
+      if (pendant.buttons[12].pressed && !previousButtonsRef.current[12]) { // D-pad Up
         if (mode === 'joint') {
           setActiveJointIndex(prev => (prev > 0 ? prev - 1 : 0));
         }
       }
-      if (gamepad.buttons[13].pressed && !previousButtonsRef.current[13]) { // D-pad Down
+      if (pendant.buttons[13].pressed && !previousButtonsRef.current[13]) { // D-pad Down
         if (mode === 'joint') {
           setActiveJointIndex(prev => (prev < jointKeys.length - 1 ? prev + 1 : jointKeys.length - 1));
         }
       }
 
       // Mode switching (Button X - typically button 2)
-      if (gamepad.buttons[2].pressed && !previousButtonsRef.current[2]) {
+      if (pendant.buttons[2].pressed && !previousButtonsRef.current[2]) {
         setMode(prev => prev === 'joint' ? 'cartesian' : 'joint');
       }
 
       // Increment size switching (Button Y - typically button the 3)
-      if (gamepad.buttons[3].pressed && !previousButtonsRef.current[3]) {
+      if (pendant.buttons[3].pressed && !previousButtonsRef.current[3]) {
         const standardIncrements = [0.1, 1, 5, 10, 50];
         const currentIndex = standardIncrements.indexOf(incrementSize);
         const nextIndex = (currentIndex + 1) % standardIncrements.length;
@@ -241,7 +241,7 @@ const JogControl = ({ sendWebSocketMessage }) => {
       // Joint controls using joysticks
       if (mode === 'joint') {
         // Left joystick Y-axis for active joint control
-        const leftYAxis = -gamepad.axes[1];
+        const leftYAxis = -pendant.axes[1];
         const intensity = (Math.abs(leftYAxis) - joystickDeadzone) / (1 - joystickDeadzone);
         if (Math.abs(leftYAxis) > joystickDeadzone) {
           const activeJoint = jointKeys[activeJointIndex];
@@ -250,8 +250,8 @@ const JogControl = ({ sendWebSocketMessage }) => {
         }        
       } else { // Cartesian mode
         // Left joystick for X/Y movement
-        const leftXAxis = gamepad.axes[0];
-        const leftYAxis = -gamepad.axes[1]; // Invert so that up is positive
+        const leftXAxis = pendant.axes[0];
+        const leftYAxis = -pendant.axes[1]; // Invert so that up is positive
         
         if (Math.abs(leftXAxis) > joystickDeadzone) {
           jogIncrement('x', Math.sign(leftXAxis));
@@ -262,8 +262,8 @@ const JogControl = ({ sendWebSocketMessage }) => {
         }
         
         // Right joystick for Z and rotation
-        const rightXAxis = gamepad.axes[2]; 
-        const rightYAxis = -gamepad.axes[3]; // Invert so that up is positive
+        const rightXAxis = pendant.axes[2]; 
+        const rightYAxis = -pendant.axes[3]; // Invert so that up is positive
         
         if (Math.abs(rightYAxis) > joystickDeadzone) {
           jogIncrement('z', Math.sign(rightYAxis));
@@ -274,40 +274,75 @@ const JogControl = ({ sendWebSocketMessage }) => {
         }
         
         // Shoulder buttons for roll/pitch
-        if (gamepad.buttons[4].pressed) { // Left shoulder
+        if (pendant.buttons[4].pressed) { // Left shoulder
           jogIncrement('roll', -1);
         }
-        if (gamepad.buttons[5].pressed) { // Right shoulder
+        if (pendant.buttons[5].pressed) { // Right shoulder
           jogIncrement('roll', 1);
         }
-        if (gamepad.buttons[6].pressed) { // Left trigger as button
+        if (pendant.buttons[6].pressed) { // Left trigger as button
           jogIncrement('pitch', -1);
         }
-        if (gamepad.buttons[7].pressed) { // Right trigger as button
+        if (pendant.buttons[7].pressed) { // Right trigger as button
           jogIncrement('pitch', 1);
         }
       }
 
       // Update previous buttons state
-      previousButtonsRef.current = gamepad.buttons.map(b => b.pressed);
+      previousButtonsRef.current = pendant.buttons.map(b => b.pressed);
 
       // Continue polling
-      requestRef.current = requestAnimationFrame(pollGamepad);
+      requestRef.current = requestAnimationFrame(pollPendant);
     };
 
-    requestRef.current = requestAnimationFrame(pollGamepad);
+    requestRef.current = requestAnimationFrame(pollPendant);
 
     return () => {
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, [gamepadConnected, controlMode, mode, incrementSize, activeJointIndex, sendWebSocketMessage]);
+  }, [pendantConnected, controlMode, mode, incrementSize, activeJointIndex, sendWebSocketMessage]);
+
+  // Add function to handle home button click
+  const handleHomeClick = async () => {
+    if (homingInProgress) return; // Prevent multiple clicks during homing
+    
+    setHomingInProgress(true);
+    
+    try {
+      // Get the backend URL
+      const backendHost = window.location.hostname;
+      const backendPort = '8080'; // Backend runs on port 8080
+      const baseUrl = `http://${backendHost}:${backendPort}`;
+      
+      // Call the home API endpoint
+      const response = await fetch(`${baseUrl}/api/home`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Home command sent successfully');
+        // Don't set homingInProgress to false here, it will be set by the WebSocket event
+      } else {
+        console.error('Failed to send home command');
+        setHomingInProgress(false); // Reset state in case of error
+      }
+    } catch (error) {
+      console.error('Error homing robot:', error);
+      setHomingInProgress(false); // Reset state in case of error
+    }
+  };
   
   return (
     <div className="jog-control">
       <div className="control-header">
-        <h2>Machine Movement {gamepadConnected && <span className="gamepad-connected">(Gamepad Connected)</span>}</h2>
+        <h2>Machine Movement {pendantConnected && <span className="pendant-connected">(Pendant Connected)</span>}</h2>
         <div className="control-selector">
           <div className="mode-selector">
             <button 
@@ -331,14 +366,25 @@ const JogControl = ({ sendWebSocketMessage }) => {
               Keyboard
             </button>
             <button 
-              className={`control-mode-button ${controlMode === 'gamepad' ? 'active' : ''}`}
-              onClick={() => setControlMode('gamepad')}
-              disabled={!gamepadConnected}
+              className={`control-mode-button ${controlMode === 'pendant' ? 'active' : ''}`}
+              onClick={() => setControlMode('pendant')}
+              disabled={!pendantConnected}
             >
-              Gamepad
+              Pendant
             </button>
           </div>
         </div>
+      </div>
+      
+      {/* Add Home button in the control actions section */}
+      <div className="control-actions">
+        <button 
+          className={`action-button home-all ${homingInProgress ? 'in-progress' : ''}`}
+          onClick={handleHomeClick}
+          disabled={homingInProgress}
+        >
+          {homingInProgress ? 'HOMING...' : 'HOME ALL'}
+        </button>
       </div>
       
       <div className="velocity-control">
@@ -439,16 +485,16 @@ const JogControl = ({ sendWebSocketMessage }) => {
             </div>
             
             <div className="keyboard-controls">
-              <h3>{controlMode === 'keyboard' ? 'Keyboard Shortcuts' : 'Gamepad Controls'}</h3>
+              <h3>{controlMode === 'keyboard' ? 'Keyboard Shortcuts' : 'Pendant Controls'}</h3>
               {controlMode === 'keyboard' ? (
                 <>
                   <p>Base: Q/A</p>
                   <p>Shoulder: W/S</p>
                   <p>Extension: E/D</p>
                   <p>Elbow: R/F</p>
-                  <p>Elbow2: T/G</p>
+                  <p>Elbow2: T/H</p>
                   <p>Mode: J (Joint) / C (Cartesian)</p>
-                  <p>Switch to Gamepad: G</p>
+                  <p>Switch to Pendant: G</p>
                 </>
               ) : (
                 <>
@@ -503,7 +549,7 @@ const JogControl = ({ sendWebSocketMessage }) => {
             </div>
             
             <div className="keyboard-controls">
-              <h3>{controlMode === 'keyboard' ? 'Keyboard Shortcuts' : 'Gamepad Controls'}</h3>
+              <h3>{controlMode === 'keyboard' ? 'Keyboard Shortcuts' : 'Pendant Controls'}</h3>
               {controlMode === 'keyboard' ? (
                 <>
                   <p>X: Right/Left</p>
@@ -513,7 +559,7 @@ const JogControl = ({ sendWebSocketMessage }) => {
                   <p>Pitch: I/K</p>
                   <p>Yaw: O/L</p>
                   <p>Mode: J (Joint) / C (Cartesian)</p>
-                  <p>Switch to Gamepad: G</p>
+                  <p>Switch to Pendant: G</p>
                 </>
               ) : (
                 <>

@@ -18,7 +18,7 @@
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   gap: 1rem;
-  height: 600px;
+  height: 700px; /* Increased from 600px to 700px */
 }
 
 /* Panel styling */
@@ -172,13 +172,15 @@
   flex: 1;
   overflow-y: auto;
   padding: 0.5rem;
+  min-height: 350px; /* Added minimum height to ensure it's large enough */
 }
 
 .step-item {
+  padding: 10px 5px; /* Increased padding */
   background-color: #1e1e1e;
   border: 1px solid #444;
   border-radius: 4px;
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px; /* Increased margin between steps */
   transition: all 0.2s;
   display: flex;
   justify-content: space-between;
@@ -191,7 +193,7 @@
 }
 
 .step-info {
-  padding: 0.75rem;
+  padding: 0.75rem 1rem; /* Increased horizontal padding */
   display: flex;
   align-items: center;
   flex: 1;
@@ -201,8 +203,8 @@
   font-weight: bold;
   color: #f0f0f0;
   margin-right: 0.5rem;
-  width: 24px;
-  height: 24px;
+  width: 28px; /* Slightly larger */
+  height: 28px; /* Slightly larger */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -214,11 +216,11 @@
   font-weight: bold;
   color: #ff6a00;
   margin-right: 0.5rem;
-  width: 60px;
+  width: 70px; /* Slightly larger */
 }
 
 .step-data {
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* Slightly larger font */
   color: #aaa;
   flex: 1;
 }
