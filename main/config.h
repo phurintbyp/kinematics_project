@@ -7,13 +7,15 @@
 #define M1_DIR 55
 #define M1_ENABLE 38
 
-#define M2_STEP 60
-#define M2_DIR 61
-#define M2_ENABLE 56
+// swap pins of y and z
 
-#define M3_STEP 46
-#define M3_DIR 48
-#define M3_ENABLE 62
+#define M3_STEP 60
+#define M3_DIR 61
+#define M3_ENABLE 56
+
+#define M2_STEP 46
+#define M2_DIR 48
+#define M2_ENABLE 62
 
 // Repurposed Extruder 0 pin
 #define M4_STEP 26
@@ -28,16 +30,16 @@
 // Limit Switches
 // For additional limit switches look at Z_MAX and aux pins
 
-const int hardLimit[NUM_MOTORS] = {3, 2, 14, 15, 18};
+const int hardLimit[NUM_MOTORS] = {3, 14, 2, 15, 18};
 
 #define HOMING_SEEK 1.5 // (1/1.5) speed
 #define HOMING_FEED 5 // (1/5) speed
 
-const int HOMING_PULL_OFF[NUM_MOTORS] = {90, 90, 90, 90, 90}; // Degrees
+const int HOMING_PULL_OFF[NUM_MOTORS] = {90, 90, 150, 90, 90}; // Degrees
 
 //lower = higher speed
-const long SPEED_SLOW[NUM_MOTORS] = {500, 500, 500, 1000, 1000};
-const long SPEED_FAST[NUM_MOTORS] = {100, 20, 20, 300, 300};
+const long SPEED_SLOW[NUM_MOTORS] = {500, 1000, 500, 500, 500};
+const long SPEED_FAST[NUM_MOTORS] = {300, 600, 100, 300, 300};
 const long HOMING_SEEK_SPEED[NUM_MOTORS] = {SPEED_FAST[0] * HOMING_SEEK, SPEED_FAST[1] * HOMING_SEEK, SPEED_FAST[2] * HOMING_SEEK, SPEED_FAST[3] * HOMING_SEEK, SPEED_FAST[4] * HOMING_SEEK};
 const long HOMING_FEED_SPEED[NUM_MOTORS] = {SPEED_FAST[0] * HOMING_FEED, SPEED_FAST[1] * HOMING_FEED, SPEED_FAST[2] * HOMING_FEED, SPEED_FAST[3] * HOMING_FEED, SPEED_FAST[4] * HOMING_FEED};
 

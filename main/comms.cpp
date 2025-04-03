@@ -43,7 +43,8 @@ void processCommand(String command) {
     stopAll();
   }
   else if (strcmp(cmd, "home") == 0) {
-    homeAll();
+    home(2);
+    // homeAll();
   }
   else if (strcmp(cmd, "getPosition") == 0) {
     printCurrentPos();
