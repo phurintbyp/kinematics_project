@@ -9,7 +9,6 @@ Motor joints[NUM_MOTORS] = {
   Motor(M2_STEP, M2_DIR, M2_ENABLE),
   Motor(M3_STEP, M3_DIR, M3_ENABLE),
   Motor(M4_STEP, M4_DIR, M4_ENABLE),
-  Motor(M5_STEP, M5_DIR, M5_ENABLE)
 };
 
 enum HomingState {
@@ -67,7 +66,6 @@ void setJointPositions(JsonObject &positions) {
     positions["j2"],
     positions["j3"],
     positions["j4"],
-    positions["j5"]
   };
 
   // Convert angles => steps, assign target
@@ -206,7 +204,7 @@ void updateHoming() {
 
     // 1) SEEKING_FAST: move quickly to find the limit switch
     case SEEKING_FAST: {
-      if (digitalRead(hardLimit[1]) == LOW) {
+      if (digitalRead(hardLimit[homingJoint]) == LOW) {
         // Limit triggered
         joints[homingJoint].stop(); // stop stepping
         // Transition to FIRST_PULL_OFF
@@ -243,7 +241,7 @@ void updateHoming() {
 
     // 3) SEEKING_SLOW: approach limit again slowly
     case SEEKING_SLOW: {
-      if (digitalRead(hardLimit[1]) == LOW) {
+      if (digitalRead(hardLimit[homingJoint]) == LOW) {
         // triggered again
         joints[homingJoint].stop();
         homingState = SECOND_PULL_OFF;
